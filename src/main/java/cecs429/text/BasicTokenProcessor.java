@@ -1,7 +1,8 @@
 package cecs429.text;
 
 /**
- * A BasicTokenProcessor creates terms from tokens by removing all non-alphanumeric characters from the token, and
+ * A BasicTokenProcessor creates terms from tokens by removing all
+ * non-alphanumeric characters from the token, and
  * converting it to all lowercase.
  */
 public class BasicTokenProcessor implements TokenProcessor {
