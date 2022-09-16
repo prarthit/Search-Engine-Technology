@@ -10,8 +10,8 @@ import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
+import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.indexing.Posting;
-import cecs429.indexing.TermDocumentIndex;
 import cecs429.text.BasicTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 
@@ -42,7 +42,7 @@ public class TermDocumentIndexer {
 	}
 
 	private static Index indexCorpus(DocumentCorpus corpus) throws IOException {
-		TermDocumentIndex termDocumentIndex = new TermDocumentIndex();
+		PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
 		BasicTokenProcessor processor = new BasicTokenProcessor();
 
 		// Add terms to the inverted index with addPosting.
@@ -54,20 +54,22 @@ public class TermDocumentIndexer {
 			// the document's content.
 			EnglishTokenStream englishTokenStream = new EnglishTokenStream(content);
 
-			// Iterate through the tokens in the document, processing them using a
-			// BasicTokenProcessor,
-			// and adding them to the inverted index dictionary.
+			// Iterate through the tokens in the document, processing them
+			// using a BasicTokenProcessor, and adding them to the
+			// positional inverted index dictionary.
 			Iterator<String> tokens = englishTokenStream.getTokens().iterator();
+			int position = 0; // Position of term in document
 			while (tokens.hasNext()) {
 				String term = processor.processToken(tokens.next());
 				int documentId = d.getId();
-				termDocumentIndex.addTerm(term, documentId);
+				positionalInvertedIndex.addTerm(term, documentId, position);
+				position++;
 			}
 
 			content.close();
 			englishTokenStream.close();
 		}
 
-		return termDocumentIndex;
+		return positionalInvertedIndex;
 	}
 }
