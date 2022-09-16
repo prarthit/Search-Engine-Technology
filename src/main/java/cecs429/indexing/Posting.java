@@ -21,6 +21,10 @@ public class Posting {
 		mPositions.add(position);
 	}
 
+	public List<Integer> getPositions() {
+		return mPositions;
+	}
+
 	public int getDocumentId() {
 		return mDocumentId;
 	}
