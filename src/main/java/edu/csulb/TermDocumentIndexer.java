@@ -14,6 +14,7 @@ import cecs429.indexing.Index;
 import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.indexing.Posting;
 import cecs429.queries.BooleanQueryParser;
+import cecs429.queries.QueryComponent;
 import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 
@@ -42,11 +43,16 @@ public class TermDocumentIndexer {
 
 			int queryFoundInFilesCount = 0;
 			BooleanQueryParser b = new BooleanQueryParser();
-			b.parseQuery(query);
-			for (Posting p : index.getPostings(processedQuery)) {
+			
+			QueryComponent q = b.parseQuery(query);
+			for (Posting p : q.getPostings(index)) {
 				queryFoundInFilesCount++;
 				System.out.println("Document: " + corpus.getDocument(p.getDocumentId()).getTitle());
 			}
+			// for (Posting p : index.getPostings(processedQuery)) {
+			// 	queryFoundInFilesCount++;
+			// 	System.out.println("Document: " + corpus.getDocument(p.getDocumentId()).getTitle());
+			// }
 			System.out.println("Query found in files: " + queryFoundInFilesCount);
 		}
 		sc.close();
