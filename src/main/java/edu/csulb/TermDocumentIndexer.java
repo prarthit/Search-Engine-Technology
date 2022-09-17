@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Paths;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Scanner;
 
 import cecs429.documents.DirectoryCorpus;
@@ -12,7 +13,7 @@ import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
 import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.indexing.Posting;
-import cecs429.text.BasicTokenProcessor;
+import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 
 public class TermDocumentIndexer {
@@ -25,14 +26,21 @@ public class TermDocumentIndexer {
 
 		// Get the query from user input
 		String query = "";
+
 		// When user inputs this string, quit the program
 		final String QUIT_STRING = "quit";
+
 		Scanner sc = new Scanner(System.in);
+
+		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
+
 		while (!query.toLowerCase().equals(QUIT_STRING)) {
 			System.out.print("Enter a term to search: ");
 			query = sc.nextLine();
+			String processedQuery = processor.processQuery(query);
+
 			int queryFoundInFilesCount = 0;
-			for (Posting p : index.getPostings(query)) {
+			for (Posting p : index.getPostings(processedQuery)) {
 				queryFoundInFilesCount++;
 				System.out.println("Document: " + corpus.getDocument(p.getDocumentId()).getTitle());
 			}
@@ -43,7 +51,7 @@ public class TermDocumentIndexer {
 
 	private static Index indexCorpus(DocumentCorpus corpus) throws IOException {
 		PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
-		BasicTokenProcessor processor = new BasicTokenProcessor();
+		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
 
 		// Add terms to the inverted index with addPosting.
 		for (Document d : corpus.getDocuments()) {
@@ -60,9 +68,11 @@ public class TermDocumentIndexer {
 			Iterator<String> tokens = englishTokenStream.getTokens().iterator();
 			int position = 0; // Position of term in document
 			while (tokens.hasNext()) {
-				String term = processor.processToken(tokens.next());
+				List<String> terms = processor.processToken(tokens.next());
 				int documentId = d.getId();
-				positionalInvertedIndex.addTerm(term, documentId, position);
+				for (String term : terms) {
+					positionalInvertedIndex.addTerm(term, documentId, position);
+				}
 				position++;
 			}
 
