@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
+import cecs429.text.AdvancedTokenProcessor;
 
 /**
  * An AndQuery composes other QueryComponents and merges their postings in an intersection-like operation.
@@ -20,10 +21,12 @@ public class AndQuery implements QueryComponent {
 	@Override
 	public List<Posting> getPostings(Index index) {		
 		//Process token before calling getPosting
-		List<Posting> result = index.getPostings(mComponents.get(0).toString());
+		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
+		String processedQuery = processor.processQuery(mComponents.get(0).toString());
+		List<Posting> result = index.getPostings(processedQuery);
 
-		for(int i=1;i<mComponents.size()-1;i++){
-			List<Posting> postingList1 = index.getPostings(mComponents.get(i).toString());
+		for(int i=1;i<mComponents.size();i++){
+			List<Posting> postingList1 = index.getPostings(processor.processQuery(mComponents.get(i).toString()));
 			result = intersectPostingDocumentIds(result, postingList1);
 		}
 
