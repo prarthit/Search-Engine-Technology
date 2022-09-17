@@ -12,6 +12,7 @@ import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
 import cecs429.indexing.TermDocumentIndex;
+import cecs429.queries.BooleanQueryParser;
 import cecs429.text.BasicTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 
@@ -32,6 +33,8 @@ public class TermDocumentIndexer {
 			System.out.print("Enter a term to search: ");
 			query = sc.nextLine();
 			int queryFoundInFilesCount = 0;
+			BooleanQueryParser b = new BooleanQueryParser();
+			b.parseQuery(query);
 			for (Posting p : index.getPostings(query)) {
 				queryFoundInFilesCount++;
 				System.out.println("Document: " + corpus.getDocument(p.getDocumentId()).getTitle());
