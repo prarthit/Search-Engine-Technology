@@ -23,4 +23,6 @@
 hs_err_pid*
 
 all-nps-sites-extracted
+*.txt
 .vscode
+.DS_Store

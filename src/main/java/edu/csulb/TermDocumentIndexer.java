@@ -4,16 +4,17 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Paths;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Scanner;
 
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
+import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.indexing.Posting;
-import cecs429.indexing.TermDocumentIndex;
 import cecs429.queries.BooleanQueryParser;
-import cecs429.text.BasicTokenProcessor;
+import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 
 public class TermDocumentIndexer {
@@ -26,16 +27,23 @@ public class TermDocumentIndexer {
 
 		// Get the query from user input
 		String query = "";
+
 		// When user inputs this string, quit the program
 		final String QUIT_STRING = "quit";
+
 		Scanner sc = new Scanner(System.in);
+
+		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
+
 		while (!query.toLowerCase().equals(QUIT_STRING)) {
 			System.out.print("Enter a term to search: ");
 			query = sc.nextLine();
+			String processedQuery = processor.processQuery(query);
+
 			int queryFoundInFilesCount = 0;
 			BooleanQueryParser b = new BooleanQueryParser();
 			b.parseQuery(query);
-			for (Posting p : index.getPostings(query)) {
+			for (Posting p : index.getPostings(processedQuery)) {
 				queryFoundInFilesCount++;
 				System.out.println("Document: " + corpus.getDocument(p.getDocumentId()).getTitle());
 			}
@@ -45,8 +53,8 @@ public class TermDocumentIndexer {
 	}
 
 	private static Index indexCorpus(DocumentCorpus corpus) throws IOException {
-		TermDocumentIndex termDocumentIndex = new TermDocumentIndex();
-		BasicTokenProcessor processor = new BasicTokenProcessor();
+		PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
+		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
 
 		// Add terms to the inverted index with addPosting.
 		for (Document d : corpus.getDocuments()) {
@@ -57,20 +65,24 @@ public class TermDocumentIndexer {
 			// the document's content.
 			EnglishTokenStream englishTokenStream = new EnglishTokenStream(content);
 
-			// Iterate through the tokens in the document, processing them using a
-			// BasicTokenProcessor,
-			// and adding them to the inverted index dictionary.
+			// Iterate through the tokens in the document, processing them
+			// using a BasicTokenProcessor, and adding them to the
+			// positional inverted index dictionary.
 			Iterator<String> tokens = englishTokenStream.getTokens().iterator();
+			int position = 0; // Position of term in document
 			while (tokens.hasNext()) {
-				String term = processor.processToken(tokens.next());
+				List<String> terms = processor.processToken(tokens.next());
 				int documentId = d.getId();
-				termDocumentIndex.addTerm(term, documentId);
+				for (String term : terms) {
+					positionalInvertedIndex.addTerm(term, documentId, position);
+				}
+				position++;
 			}
 
 			content.close();
 			englishTokenStream.close();
 		}
 
-		return termDocumentIndex;
+		return positionalInvertedIndex;
 	}
 }
