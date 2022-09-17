@@ -178,11 +178,11 @@ public class BooleanQueryParser {
 			// Just test single double quote when lenghtout is 0
 			lengthOut = endQuote - startQuote - 1;
 
-			String[] mTerms = subquery.substring(startQuote+1, startQuote + lengthOut + 1).split(" ");
+			String terms = subquery.substring(startQuote+1, startQuote + lengthOut + 1); // .split(" ");
 			// This is a term literal containing a single term.
 			return new Literal(
-			new StringBounds(startQuote, lengthOut),
-			new PhraseLiteral(Arrays.asList(mTerms)));
+			new StringBounds(startQuote, lengthOut+2),
+			new PhraseLiteral(terms));
 		}
 
 		return null;

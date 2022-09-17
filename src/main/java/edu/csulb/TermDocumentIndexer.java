@@ -44,6 +44,8 @@ public class TermDocumentIndexer {
 			int queryFoundInFilesCount = 0;
 			BooleanQueryParser b = new BooleanQueryParser();
 			
+			// change ProcessToken for QueryComponent in OrQuery.java
+			// Use toString method of override
 			QueryComponent q = b.parseQuery(query);
 			for (Posting p : q.getPostings(index)) {
 				queryFoundInFilesCount++;

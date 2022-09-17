@@ -28,6 +28,7 @@ public class OrQuery implements QueryComponent {
 		List<Posting> result = index.getPostings(processedQuery);
 
 		for(int i=1;i<mComponents.size();i++){
+			// change ProcessToken for QueryComponent
 			List<Posting> postingList1 = index.getPostings(processor.processQuery(mComponents.get(i).toString()));
 			result = intersectPostingDocumentIds(result, postingList1);
 		}

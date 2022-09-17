@@ -33,10 +33,11 @@ public class PhraseLiteral implements QueryComponent {
 	@Override
 	public List<Posting> getPostings(Index index) {
 		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
-		String processedQuery = processor.processQuery(mTerms.get(0).toString());
+		String processedQuery = processor.processQuery(mTerms.get(0));
 		List<Posting> result = index.getPostings(processedQuery);
 		for(int i=1;i<mTerms.size();i++){
-			List<Posting> literalPostings = index.getPostings(processor.processQuery(mTerms.get(i+1).toString()));
+			// Use toString method of override
+			List<Posting> literalPostings = index.getPostings(processor.processQuery(mTerms.get(i)));
 			result = positionalIntersect(result, literalPostings, i);
 		}
 		

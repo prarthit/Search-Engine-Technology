@@ -22,6 +22,8 @@ public class AndQuery implements QueryComponent {
 	public List<Posting> getPostings(Index index) {		
 		//Process token before calling getPosting
 		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
+
+		// Check the toString override method with escape characters
 		String processedQuery = processor.processQuery(mComponents.get(0).toString());
 		List<Posting> result = index.getPostings(processedQuery);
 
