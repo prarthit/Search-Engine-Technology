@@ -15,8 +15,8 @@ import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
 import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.indexing.Posting;
-import cecs429.queries.BooleanQueryParser;
-import cecs429.queries.QueryComponent;
+import cecs429.querying.BooleanQueryParser;
+import cecs429.querying.QueryComponent;
 import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 
