@@ -40,21 +40,15 @@ public class TermDocumentIndexer {
 			System.out.print("Enter a term to search: ");
 			query = sc.nextLine();
 			String processedQuery = processor.processQuery(query);
-
 			int queryFoundInFilesCount = 0;
-			BooleanQueryParser b = new BooleanQueryParser();
-			
-			// change ProcessToken for QueryComponent in OrQuery.java
-			// Use toString method of override
-			QueryComponent q = b.parseQuery(query);
-			for (Posting p : q.getPostings(index)) {
+
+			BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
+			QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
+
+			for (Posting p : queryComponent.getPostings(index)) {
 				queryFoundInFilesCount++;
 				System.out.println("Document: " + corpus.getDocument(p.getDocumentId()).getTitle());
 			}
-			// for (Posting p : index.getPostings(processedQuery)) {
-			// 	queryFoundInFilesCount++;
-			// 	System.out.println("Document: " + corpus.getDocument(p.getDocumentId()).getTitle());
-			// }
 			System.out.println("Query found in files: " + queryFoundInFilesCount);
 		}
 		sc.close();

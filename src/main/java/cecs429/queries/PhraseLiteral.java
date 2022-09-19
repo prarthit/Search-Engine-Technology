@@ -35,17 +35,13 @@ public class PhraseLiteral implements QueryComponent {
 		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
 		String processedQuery = processor.processQuery(mTerms.get(0));
 		List<Posting> result = index.getPostings(processedQuery);
+		
 		for(int i=1;i<mTerms.size();i++){
-			// Use toString method of override
 			List<Posting> literalPostings = index.getPostings(processor.processQuery(mTerms.get(i)));
 			result = positionalIntersect(result, literalPostings, i);
 		}
 		
 		return result;
-		// TODO: program this method. Retrieve the postings for the individual terms in the phrase,
-		// and positional merge them together.
-		// parseQuery can then be executed by calling its
-		// getPostings method, passing the PositionalInvertedIndex you constructed earlier in the program.
 	}
 	
 	private int documentID(Posting posting){

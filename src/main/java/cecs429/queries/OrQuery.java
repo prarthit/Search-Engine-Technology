@@ -22,19 +22,17 @@ public class OrQuery implements QueryComponent {
 	
 	@Override
 	public List<Posting> getPostings(Index index) {
-		//Process token before calling getPosting
-		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
-		String processedQuery = processor.processQuery(mComponents.get(0).toString());
-		List<Posting> result = index.getPostings(processedQuery);
+		if(mComponents.size() == 0) {
+			return null;
+		}
+		
+		List<Posting> result = mComponents.get(0).getPostings(index);
 
 		for(int i=1;i<mComponents.size();i++){
-			// change ProcessToken for QueryComponent
-			List<Posting> postingList1 = index.getPostings(processor.processQuery(mComponents.get(i).toString()));
+			List<Posting> postingList1 = mComponents.get(i).getPostings(index);
 			result = intersectPostingDocumentIds(result, postingList1);
 		}
 
-		// TODO: program the merge for an AndQuery, by gathering the postings of the composed QueryComponents and
-		// intersecting the resulting postings.
 		return result;
 	}
 
