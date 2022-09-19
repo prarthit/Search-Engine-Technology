@@ -16,20 +16,17 @@ public class BooleanQueryParser {
 	private static class StringBounds {
 		int start;
 		int length;
-
 		StringBounds(int start, int length) {
 			this.start = start;
 			this.length = length;
 		}
 	}
-
 	/**
 	 * Encapsulates a QueryComponent and the StringBounds that led to its parsing.
 	 */
 	private static class Literal {
 		StringBounds bounds;
 		QueryComponent literalComponent;
-
 		Literal(StringBounds bounds, QueryComponent literalComponent) {
 			this.bounds = bounds;
 			this.literalComponent = literalComponent;
@@ -60,7 +57,6 @@ public class BooleanQueryParser {
 			// Extract the identified subquery into its own string.
 			String subquery = query.substring(nextSubquery.start, nextSubquery.start + nextSubquery.length);
 			int subStart = 0;
-
 			// Store all the individual components of this subquery.
 			List<QueryComponent> subqueryLiterals = new ArrayList<>(0);
 
@@ -111,7 +107,6 @@ public class BooleanQueryParser {
 	 */
 	private StringBounds findNextSubquery(String query, int startIndex) {
 		int lengthOut;
-
 		// Find the start of the next subquery by skipping spaces and + signs.
 		char test = query.charAt(startIndex);
 		while (test == ' ' || test == '+') {
@@ -148,7 +143,6 @@ public class BooleanQueryParser {
 	private Literal findNextLiteral(String subquery, int startIndex) {
 		int subLength = subquery.length();
 		int lengthOut;
-
 		// Skip past white space.
 		while (subquery.charAt(startIndex) == ' ') {
 			++startIndex;

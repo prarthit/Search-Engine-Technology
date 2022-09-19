@@ -1,5 +1,4 @@
 package cecs429.querying;
-
 import java.util.List;
 
 import cecs429.indexing.*;

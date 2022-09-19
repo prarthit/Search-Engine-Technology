@@ -16,7 +16,6 @@ import cecs429.text.AdvancedTokenProcessor;
 public class PhraseLiteral implements QueryComponent {
 	// The list of individual terms in the phrase.
 	private List<String> mTerms = new ArrayList<>();
-
 	/**
 	 * Constructs a PhraseLiteral with the given individual phrase terms.
 	 */
