@@ -10,25 +10,26 @@ import cecs429.indexing.Posting;
 import cecs429.text.AdvancedTokenProcessor;
 
 /**
- * An OrQuery composes other QueryComponents and merges their postings with a union-type operation.
+ * An OrQuery composes other QueryComponents and merges their postings with a
+ * union-type operation.
  */
 public class OrQuery implements QueryComponent {
 	// The components of the Or query.
 	private List<QueryComponent> mComponents;
-	
+
 	public OrQuery(List<QueryComponent> components) {
 		mComponents = components;
 	}
-	
+
 	@Override
 	public List<Posting> getPostings(Index index) {
-		if(mComponents.size() == 0) {
+		if (mComponents.size() == 0) {
 			return null;
 		}
-		
+
 		List<Posting> result = mComponents.get(0).getPostings(index);
 
-		for(int i=1;i<mComponents.size();i++){
+		for (int i = 1; i < mComponents.size(); i++) {
 			List<Posting> postingList1 = mComponents.get(i).getPostings(index);
 			result = intersectPostingDocumentIds(result, postingList1);
 		}
@@ -40,16 +41,16 @@ public class OrQuery implements QueryComponent {
 		literalPostings1.addAll(literalPostings2);
 
 		HashSet<Integer> seen = new HashSet<>();
-		literalPostings1.removeIf(e->!seen.add(e.getDocumentId()));	
+		literalPostings1.removeIf(e -> !seen.add(e.getDocumentId()));
 
-		return literalPostings1; 
+		return literalPostings1;
 	}
-	
+
 	@Override
 	public String toString() {
 		// Returns a string of the form "[SUBQUERY] + [SUBQUERY] + [SUBQUERY]"
 		return "(" +
-		 String.join(" + ", mComponents.stream().map(c -> c.toString()).collect(Collectors.toList()))
-		 + " )";
+				String.join(" + ", mComponents.stream().map(c -> c.toString()).collect(Collectors.toList()))
+				+ " )";
 	}
 }
