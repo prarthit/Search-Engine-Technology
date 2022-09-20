@@ -45,13 +45,6 @@ public class PhraseLiteral implements QueryComponent {
 		return result;
 	}
 
-	private int documentID(Posting posting) {
-		return posting.getDocumentId();
-	}
-
-	private List<Integer> positions(Posting posting) {
-		return posting.getPositions();
-	}
 
 	private List<Posting> positionalIntersect(List<Posting> literalPostings1, List<Posting> literalPostings2, int k) {
 		List<Posting> res = new ArrayList<>();
@@ -63,10 +56,10 @@ public class PhraseLiteral implements QueryComponent {
 			Posting p1 = literalPostings1.get(i);
 			Posting p2 = literalPostings2.get(j);
 
-			if (documentID(p1) == documentID(p2)) {
+			if (p1.getDocumentId() == p2.getDocumentId()) {
 				List<Integer> l = new ArrayList<>();
-				List<Integer> postingPosition1 = positions(p1);
-				List<Integer> postingPosition2 = positions(p2);
+				List<Integer> postingPosition1 = p1.getPositions();
+				List<Integer> postingPosition2 = p2.getPositions();
 
 				int plen1 = postingPosition1.size();
 				int plen2 = postingPosition2.size();
@@ -74,26 +67,26 @@ public class PhraseLiteral implements QueryComponent {
 				int m = 0;
 				int n = 0;
 
-				while (m != plen1) {
-					while (n != plen2) {
-						if (Math.abs(postingPosition1.get(m) - postingPosition2.get(n)) <= k) {
-							l.add(postingPosition2.get(n));
-						} else if (postingPosition2.get(n) > postingPosition1.get(m)) {
-							break;
-						}
+				while(m != plen1 && n != plen2){
+					int mPosition = postingPosition1.get(m);
+					int nPosition = postingPosition2.get(n);
+
+					if(nPosition - mPosition == 1){
+						l.add(nPosition);
+						m++;
+						n++;
+					}else if(mPosition >= nPosition){
 						n++;
 					}
-
-					while (!l.isEmpty() && Math.abs(l.get(0) - postingPosition1.get(m)) > k) {
-						l.remove(l.get(0));
+					else{
+						m++;
 					}
-					m++;
 				}
-				res.add(new Posting(documentID(p1), l));
+				res.add(new Posting(p1.getDocumentId(), l));
 
 				i++;
 				j++;
-			} else if (documentID(p1) < documentID(p2)) {
+			} else if (p1.getDocumentId() < p2.getDocumentId()) {
 				i++;
 			} else {
 				j++;

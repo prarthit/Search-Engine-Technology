@@ -148,13 +148,10 @@ public class BooleanQueryParser {
 			++startIndex;
 		}
 
-		// Locate the first double quote to find the start of this phrase literal.
-		int startQuote = subquery.indexOf('\"', startIndex);
+		if(subquery.charAt(startIndex) != '\"'){
+			// Locate the next space to find the end of this literal.
+			int nextSpace = subquery.indexOf(' ', startIndex);
 
-		// Locate the next space to find the end of this literal.
-		int nextSpace = subquery.indexOf(' ', startIndex);
-
-		if ((nextSpace != -1 && nextSpace < startQuote) || startQuote < 0) {
 			if (nextSpace < 0) {
 				// No more literals in this subquery.
 				lengthOut = subLength - startIndex;
@@ -167,24 +164,23 @@ public class BooleanQueryParser {
 					new StringBounds(startIndex, lengthOut),
 					new TermLiteral(subquery.substring(startIndex, startIndex + lengthOut)));
 		}
+		else{
+			// Since startIndex is at starting of the quote
+			startIndex++;
+			// Locate the next space to find the end of this literal.
+			int nextQuote = subquery.indexOf('\"', startIndex);
 
-		int endQuote = startQuote;
-		// Error handling: In case when only single quote is present and nothing else
-		// afterwards
-		if (subLength - startQuote > 1) {
-			endQuote = subquery.indexOf('\"', startQuote + 1);
-
-			// Just test single double quote when lenghtout is 0
-			lengthOut = endQuote - startQuote - 1;
-
-			String terms = subquery.substring(startQuote + 1, startQuote + lengthOut + 1); // .split(" ");
+			if (nextQuote < 0) {
+				// No more literals in this subquery.
+				lengthOut = subLength - startIndex;
+			} else {
+				lengthOut = nextQuote - startIndex;
+			}
+			String terms = subquery.substring(startIndex, startIndex + lengthOut);
 			// This is a term literal containing a single term.
 			return new Literal(
-					new StringBounds(startQuote, lengthOut + 2),
+					new StringBounds(startIndex - 1, lengthOut + 2),
 					new PhraseLiteral(terms));
 		}
-
-		return null;
-
 	}
 }

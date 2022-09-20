@@ -23,11 +23,12 @@ public class OrQuery implements QueryComponent {
 
 	@Override
 	public List<Posting> getPostings(Index index) {
+		List<Posting> result = new ArrayList<>();
 		if (mComponents.size() == 0) {
-			return null;
+			return result;
 		}
 
-		List<Posting> result = mComponents.get(0).getPostings(index);
+		result = mComponents.get(0).getPostings(index);
 
 		for (int i = 1; i < mComponents.size(); i++) {
 			List<Posting> postingList1 = mComponents.get(i).getPostings(index);

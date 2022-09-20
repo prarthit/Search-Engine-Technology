@@ -20,21 +20,18 @@ public class AndQuery implements QueryComponent {
 
 	@Override
 	public List<Posting> getPostings(Index index) {
+		List<Posting> result = new ArrayList<>();
 		if (mComponents.size() == 0) {
-			return null;
+			return result;
 		}
 
-		List<Posting> result = mComponents.get(0).getPostings(index);
+		result = mComponents.get(0).getPostings(index);
 		for (int i = 1; i < mComponents.size(); i++) {
 			List<Posting> postingList1 = mComponents.get(i).getPostings(index);
 			result = intersectPostingDocumentIds(result, postingList1);
 		}
 
 		return result;
-	}
-
-	private int documentID(Posting posting) {
-		return posting.getDocumentId();
 	}
 
 	private List<Posting> intersectPostingDocumentIds(List<Posting> literalPostings1, List<Posting> literalPostings2) {
@@ -47,11 +44,11 @@ public class AndQuery implements QueryComponent {
 			Posting p1 = literalPostings1.get(i);
 			Posting p2 = literalPostings2.get(j);
 
-			if (documentID(p1) == documentID(p2)) {
-				result.add(new Posting(documentID(p1)));
+			if (p1.getDocumentId() == p2.getDocumentId()) {
+				result.add(new Posting(p1.getDocumentId()));
 				i++;
 				j++;
-			} else if (documentID(p1) < documentID(p2)) {
+			} else if (p1.getDocumentId() < p2.getDocumentId()) {
 				i++;
 			} else {
 				j++;

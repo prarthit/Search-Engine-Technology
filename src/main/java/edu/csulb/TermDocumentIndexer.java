@@ -12,6 +12,7 @@ import java.util.Scanner;
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
+import cecs429.documents.FileDocument;
 import cecs429.indexing.Index;
 import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.indexing.Posting;
@@ -57,10 +58,10 @@ public class TermDocumentIndexer {
 			Index index = indexCorpus(corpus);
 			// Get the query from user input
 			String query = "";
-			// When user inputs this string, quit the program
 
 			AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
-
+			
+			// When user inputs this string, quit the program
 			while (!query.toLowerCase().startsWith(":q")) {
 				System.out.print("Enter a term to search: ");
 				query = sc.nextLine();
@@ -100,7 +101,7 @@ public class TermDocumentIndexer {
 					for (Posting p : queryComponent.getPostings(index)) {
 						queryFoundInFilesCount++;
 						System.out.println("Document: " + corpus.getDocument(p.getDocumentId()).getTitle()
-								+ " {FileName: " + corpus.getDocument(p.getDocumentId()).getId() + fileExtension + "}");
+								+ " {FileName: " + ((FileDocument)corpus.getDocument(p.getDocumentId())).getFilePath().getFileName().toString() + "}");
 					}
 
 					System.out.println("Query found in files: " + queryFoundInFilesCount);
