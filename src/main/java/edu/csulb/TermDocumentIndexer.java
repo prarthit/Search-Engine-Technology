@@ -26,30 +26,23 @@ import org.json.simple.parser.JSONParser;
 
 public class TermDocumentIndexer {
 	public static void main(String[] args) throws IOException {
-		String directoryName; // Directory name entered by the user.
+		String directoryName = ""; // Directory name entered by the user.
 		String fileExtension = ".json";
-		// Input Directory from user
-		System.out.print("Enter a directory name: ");
+		boolean isValidDirectory = false;
 		Scanner sc = new Scanner(System.in);
-		directoryName = sc.nextLine().trim();
-		boolean isDirectoryPresent = false;
 
-		// Print all files and folders in the Input Directory from user
-		isDirectoryPresent = traverseFiles(new File(directoryName));
 		do {
-			while (!isDirectoryPresent) {
-				System.out.println("Please try again with correct directory name.");
-				System.out.print("Do you want to continue (Y/N):");
-				String ch = sc.nextLine();
-				if (ch.toLowerCase().equals("n")) {
-					System.exit(0);
-				}
-
+			if (!isValidDirectory) {
+				// Input Directory from user
 				System.out.print("Enter a directory name: ");
+
 				directoryName = sc.nextLine().trim();
-				isDirectoryPresent = traverseFiles(new File(directoryName));
+				// Print all files and folders in the Input Directory from user
+				isValidDirectory = traverseFiles(new File(directoryName));
+				continue;
 			}
-			System.out.println("Listing the files/folders of input directory - " + directoryName);
+			// System.out.println("Listing the files/folders of input directory - " +
+			// directoryName);
 			// Create a DocumentCorpus to load .json documents from the user input
 			// directory.
 			DocumentCorpus corpus = DirectoryCorpus
@@ -60,7 +53,7 @@ public class TermDocumentIndexer {
 			String query = "";
 
 			AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
-			
+
 			// When user inputs this string, quit the program
 			while (!query.toLowerCase().startsWith(":q")) {
 				System.out.print("Enter a term to search: ");
@@ -76,8 +69,8 @@ public class TermDocumentIndexer {
 				} else if (query.toLowerCase().startsWith(":index")) {
 					query = query.replaceAll(":index", "").trim();
 
-					isDirectoryPresent = traverseFiles(new File(query));
-					if (isDirectoryPresent) {
+					isValidDirectory = traverseFiles(new File(query));
+					if (isValidDirectory) {
 						directoryName = query;
 						break;
 					} else {
@@ -98,21 +91,27 @@ public class TermDocumentIndexer {
 					BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
 					QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
 
-					for (Posting p : queryComponent.getPostings(index)) {
-						queryFoundInFilesCount++;
-						System.out.println("Document: " + corpus.getDocument(p.getDocumentId()).getTitle()
-								+ " {FileName: " + ((FileDocument)corpus.getDocument(p.getDocumentId())).getFilePath().getFileName().toString() + "}");
-					}
+					if (queryComponent != null) {
+						for (Posting p : queryComponent.getPostings(index)) {
+							queryFoundInFilesCount++;
+							System.out.println("Document: " + corpus.getDocument(p.getDocumentId()).getTitle()
+									+ " (FileName: "
+									+ ((FileDocument) corpus.getDocument(p.getDocumentId())).getFilePath().getFileName()
+											.toString()
+									+ " ID: " +
+									corpus.getDocument(p.getDocumentId()).getId() + ")");
+						}
 
-					System.out.println("Query found in files: " + queryFoundInFilesCount);
-					if (queryFoundInFilesCount > 0) {
-						// Ask the user if they would like to select a document to view
-						System.out.print("Select a document to view (y/n):");
-						char ch = sc.nextLine().charAt(0);
-						if (ch == 'y' || ch == 'Y') {
-							System.out.print("Enter document name:");
-							String fileName = sc.nextLine();
-							readFile(fileName, directoryName);
+						System.out.println("Query found in files: " + queryFoundInFilesCount);
+						if (queryFoundInFilesCount > 0) {
+							// Ask the user if they would like to select a document to view
+							System.out.print("Select a document to view (y/n):");
+							char ch = sc.nextLine().charAt(0);
+							if (ch == 'y' || ch == 'Y') {
+								System.out.print("Enter document name:");
+								String fileName = sc.nextLine();
+								readFile(fileName, directoryName);
+							}
 						}
 					}
 				}

@@ -32,19 +32,39 @@ public class OrQuery implements QueryComponent {
 
 		for (int i = 1; i < mComponents.size(); i++) {
 			List<Posting> postingList1 = mComponents.get(i).getPostings(index);
-			result = intersectPostingDocumentIds(result, postingList1);
+			result = unionPostingDocumentIds(result, postingList1);
 		}
 
 		return result;
 	}
 
-	private List<Posting> intersectPostingDocumentIds(List<Posting> literalPostings1, List<Posting> literalPostings2) {
-		literalPostings1.addAll(literalPostings2);
+	private List<Posting> unionPostingDocumentIds(List<Posting> literalPostings1, List<Posting> literalPostings2) {
+		List<Posting> result = new ArrayList<Posting>();
+		int len1 = literalPostings1.size();
+		int len2 = literalPostings2.size();
+		int i = 0;
+		int j = 0;
+		while (i != len1 && j != len2) {
+			int docId1 = literalPostings1.get(i).getDocumentId();
+			int docId2 = literalPostings2.get(j).getDocumentId();
 
-		HashSet<Integer> seen = new HashSet<>();
-		literalPostings1.removeIf(e -> !seen.add(e.getDocumentId()));
+			int docIdToBeInserted = 0;
+			if(docId1<docId2){
+				// Insert docId1 in result
+				docIdToBeInserted = docId1;
+				i++;
+			} else {
+				// Insert docId2 in result
+				docIdToBeInserted = docId2;
+				j++;
+			}
 
-		return literalPostings1;
+			// If the last inserted document id is same don't insert it into the list
+			if(result.size()==0 || result.get(result.size()-1).getDocumentId()!=docIdToBeInserted){
+				result.add(new Posting(docIdToBeInserted));
+			}
+		}
+		return result;
 	}
 
 	@Override

@@ -39,14 +39,14 @@ public class PhraseLiteral implements QueryComponent {
 
 		for (int i = 1; i < mTerms.size(); i++) {
 			List<Posting> literalPostings = index.getPostings(processor.processQuery(mTerms.get(i)));
-			result = positionalIntersect(result, literalPostings, i);
+			result = positionalIntersect(result, literalPostings);
 		}
 
 		return result;
 	}
 
 
-	private List<Posting> positionalIntersect(List<Posting> literalPostings1, List<Posting> literalPostings2, int k) {
+	private List<Posting> positionalIntersect(List<Posting> literalPostings1, List<Posting> literalPostings2) {
 		List<Posting> res = new ArrayList<>();
 		int len1 = literalPostings1.size();
 		int len2 = literalPostings2.size();
@@ -57,7 +57,7 @@ public class PhraseLiteral implements QueryComponent {
 			Posting p2 = literalPostings2.get(j);
 
 			if (p1.getDocumentId() == p2.getDocumentId()) {
-				List<Integer> l = new ArrayList<>();
+				List<Integer> documentPositions = new ArrayList<>();
 				List<Integer> postingPosition1 = p1.getPositions();
 				List<Integer> postingPosition2 = p2.getPositions();
 
@@ -72,7 +72,7 @@ public class PhraseLiteral implements QueryComponent {
 					int nPosition = postingPosition2.get(n);
 
 					if(nPosition - mPosition == 1){
-						l.add(nPosition);
+						documentPositions.add(nPosition);
 						m++;
 						n++;
 					}else if(mPosition >= nPosition){
@@ -82,7 +82,9 @@ public class PhraseLiteral implements QueryComponent {
 						m++;
 					}
 				}
-				res.add(new Posting(p1.getDocumentId(), l));
+				if(documentPositions.size() != 0){
+					res.add(new Posting(p1.getDocumentId(), documentPositions));
+				}
 
 				i++;
 				j++;
