@@ -25,10 +25,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 public class TermDocumentIndexer {
+	public static String directoryName = ""; // Directory name entered by the user.
+	public static boolean isValidDirectory = false;
+	private static boolean isIndexSpecialQueryCalled = false;
+
 	public static void main(String[] args) throws IOException {
-		String directoryName = ""; // Directory name entered by the user.
 		String fileExtension = ".json";
-		boolean isValidDirectory = false;
 		Scanner sc = new Scanner(System.in);
 
 		do {
@@ -41,8 +43,6 @@ public class TermDocumentIndexer {
 				isValidDirectory = traverseFiles(new File(directoryName));
 				continue;
 			}
-			// System.out.println("Listing the files/folders of input directory - " +
-			// directoryName);
 			// Create a DocumentCorpus to load .json documents from the user input
 			// directory.
 			DocumentCorpus corpus = DirectoryCorpus
@@ -56,68 +56,85 @@ public class TermDocumentIndexer {
 
 			// When user inputs this string, quit the program
 			while (!query.toLowerCase().startsWith(":q")) {
-				System.out.print("Enter a term to search: ");
+				System.out.print("\nEnter a term to search: ");
 				query = sc.nextLine();
 
-				if (query.toLowerCase().startsWith(":q")) {
-					directoryName = "";
-				} else if (query.toLowerCase().startsWith(":stem")) {
-					query = query.replaceAll(":stem", "").trim();
-
-					List<String> stemmedTerms = processor.processToken(query);
-					stemmedTerms.forEach(stemmedTerm -> System.out.println(stemmedTerm));
-				} else if (query.toLowerCase().startsWith(":index")) {
-					query = query.replaceAll(":index", "").trim();
-
-					isValidDirectory = traverseFiles(new File(query));
-					if (isValidDirectory) {
-						directoryName = query;
-						break;
-					} else {
-						System.out.println("Please try searching another query.");
-					}
-				} else if (query.toLowerCase().startsWith(":vocab")) {
-					query = query.replaceAll(":vocab", "").trim();
-
-					List<String> topThousandTerms = index.getVocabulary();
-					int sizeVocabularyterms = topThousandTerms.size();
-					for (int i = 0; i < sizeVocabularyterms && i != 1000; i++) {
-						System.out.println(topThousandTerms.get(i));
-					}
-					System.out.println(sizeVocabularyterms);
-				} else {
-					int queryFoundInFilesCount = 0;
-
-					BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
-					QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
-
-					if (queryComponent != null) {
-						for (Posting p : queryComponent.getPostings(index)) {
-							queryFoundInFilesCount++;
-							System.out.println("Document: " + corpus.getDocument(p.getDocumentId()).getTitle()
-									+ " (FileName: "
-									+ ((FileDocument) corpus.getDocument(p.getDocumentId())).getFilePath().getFileName()
-											.toString()
-									+ " ID: " +
-									corpus.getDocument(p.getDocumentId()).getId() + ")");
-						}
-
-						System.out.println("Query found in files: " + queryFoundInFilesCount);
-						if (queryFoundInFilesCount > 0) {
-							// Ask the user if they would like to select a document to view
-							System.out.print("Select a document to view (y/n):");
-							char ch = sc.nextLine().charAt(0);
-							if (ch == 'y' || ch == 'Y') {
-								System.out.print("Enter document name:");
-								String fileName = sc.nextLine();
-								readFile(fileName, directoryName);
-							}
-						}
-					}
+				boolean hasSpecialQueryCalled = processSpecialQueries(query, processor, index);
+				if (isIndexSpecialQueryCalled) {
+					isIndexSpecialQueryCalled = false;
+					break;
+				}
+				if (!hasSpecialQueryCalled) {
+					findQuery(query, index, corpus, sc);
 				}
 			}
 		} while (!directoryName.isEmpty());
 		sc.close();
+	}
+
+	private static void findQuery(String query, Index index, DocumentCorpus corpus, Scanner sc) {
+		int queryFoundInFilesCount = 0;
+
+		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
+		QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
+
+		if (queryComponent != null) {
+			for (Posting p : queryComponent.getPostings(index)) {
+				queryFoundInFilesCount++;
+				System.out.println("Document: " + corpus.getDocument(p.getDocumentId()).getTitle()
+						+ " (FileName: "
+						+ ((FileDocument) corpus.getDocument(p.getDocumentId())).getFilePath().getFileName()
+								.toString()
+						+ " ID: " +
+						corpus.getDocument(p.getDocumentId()).getId() + ")");
+			}
+
+			System.out.println("Query found in files: " + queryFoundInFilesCount);
+			if (queryFoundInFilesCount > 0) {
+				// Ask the user if they would like to select a document to view
+				System.out.print("Select a document to view (y/n):");
+				char ch = sc.nextLine().charAt(0);
+				if (ch == 'y' || ch == 'Y') {
+					System.out.print("Enter document name:");
+					String fileName = sc.nextLine();
+					readFile(fileName, directoryName);
+				}
+			}
+		}
+	}
+
+	private static boolean processSpecialQueries(String query, AdvancedTokenProcessor processor, Index index) {
+		if (query.toLowerCase().startsWith(":q")) {
+			directoryName = "";
+		} else if (query.toLowerCase().startsWith(":stem")) {
+			query = query.replaceAll(":stem", "").trim();
+
+			List<String> stemmedTerms = processor.processToken(query);
+			stemmedTerms.forEach(stemmedTerm -> System.out.println(stemmedTerm));
+		} else if (query.toLowerCase().startsWith(":index")) {
+			query = query.replaceAll(":index", "").trim();
+
+			isValidDirectory = traverseFiles(new File(query));
+			if (isValidDirectory) {
+				directoryName = query;
+				isIndexSpecialQueryCalled = true;
+			} else {
+				System.out.println("Please try searching another query.");
+			}
+		} else if (query.toLowerCase().startsWith(":vocab")) {
+			query = query.replaceAll(":vocab", "").trim();
+
+			List<String> topThousandTerms = index.getVocabulary();
+			int sizeVocabularyterms = topThousandTerms.size();
+			for (int i = 0; i < sizeVocabularyterms && i != 1000; i++) {
+				System.out.println(topThousandTerms.get(i));
+			}
+			System.out.println(sizeVocabularyterms);
+		} else {
+			return false;
+		}
+
+		return true;
 	}
 
 	private static Index indexCorpus(DocumentCorpus corpus) throws IOException {
