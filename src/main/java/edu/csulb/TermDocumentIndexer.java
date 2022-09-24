@@ -21,8 +21,6 @@ import cecs429.querying.QueryComponent;
 import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 public class TermDocumentIndexer {
 	public static void main(String[] args) throws IOException {
@@ -110,7 +108,7 @@ public class TermDocumentIndexer {
 							if (ch == 'y' || ch == 'Y') {
 								System.out.print("Enter document name:");
 								String fileName = sc.nextLine();
-								readFile(fileName, directoryName);
+								readFile(directoryName + "/" + fileName);
 							}
 						}
 					}
@@ -121,14 +119,9 @@ public class TermDocumentIndexer {
 	}
 
 	private static Index indexCorpus(DocumentCorpus corpus) throws IOException {
-		long startTime; // Start time to build positional Inverted Index
-		long endTime; // End time to build positional Inverted Index
-
 		PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
 		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
-
-		// Start time to build positional Iverted Index
-		startTime = System.nanoTime();
+		long startTime = System.currentTimeMillis(); // Start time to build positional Inverted Index
 
 		// Add terms to the inverted index with addPosting.
 		for (Document d : corpus.getDocuments()) {
@@ -157,41 +150,33 @@ public class TermDocumentIndexer {
 			englishTokenStream.close();
 		}
 
-		// end time to build inverted positional index
-		endTime = System.nanoTime();
-		// total time taken to build inverted positional index
-		System.out.println(
-				"Time taken to build inverted positional index: " + ((endTime - startTime) / 1000000000) + " seconds");
+		long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
 
+		// total time taken to build inverted positional index
+		System.out.println("Time taken to build inverted positional index: " + ((endTime - startTime) / 1000) + " seconds");
 		return positionalInvertedIndex;
 	}
 
+	// Treverse and check if files are present in the user input directory.
 	private static boolean traverseFiles(File inputFile) {
 		File[] listFiles = inputFile.listFiles();
 		if (listFiles == null) {
 			return false;
 		}
-		for (File file : listFiles) {
-			if (file.isDirectory()) {
-				System.out.println("Directory:" + file.getAbsolutePath());
-				traverseFiles(file);
-			} else {
-				System.out.println("\tFile:" + file.getAbsolutePath());
-			}
-		}
-
 		return true;
 	}
 
-	public static void readFile(String fileName, String fileDirectory) {
-		JSONParser parser = new JSONParser();
+	// Generic file reader 
+	public static void readFile(String filepath) {
 		try {
-			Object obj = parser.parse(new FileReader(fileDirectory + "/" + fileName));
-			JSONObject jsonObject = (JSONObject) obj;
-			System.out.println(jsonObject.get("body"));
+			FileReader fr = new FileReader(filepath);
+			int i;
+			while ((i = fr.read()) != -1){
+				System.out.print((char)i);
+			}
+			fr.close();
 		} catch (Exception e) {
-			System.out.println("Exception: " + e.getMessage());
-			System.out.println("Please try searching again.");
+			e.printStackTrace();
 		}
 	}
 }
