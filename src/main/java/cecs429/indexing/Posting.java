@@ -11,9 +11,19 @@ public class Posting {
 	private int mDocumentId;
 	private List<Integer> mPositions; // Positions of term in document
 
+	public Posting(int documentId) {
+		mDocumentId = documentId;
+		mPositions = new ArrayList<>();
+	}
+
 	public Posting(int documentId, int position) {
 		mDocumentId = documentId;
 		mPositions = new ArrayList<>(Arrays.asList(position));
+	}
+
+	public Posting(int documentId, List<Integer>  positions) {
+		mDocumentId = documentId;
+		mPositions = positions;
 	}
 
 	// Add position of term to mPositions list
