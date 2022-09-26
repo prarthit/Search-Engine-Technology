@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import cecs429.indexing.BiwordInvertedIndex;
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
 
@@ -25,6 +26,10 @@ public class AndQuery implements QueryComponent {
 			return result;
 		}
 
+		// if(mComponents.get(0) instanceof PhraseLiteral){
+		// 	BiwordInvertedIndex biwordInvertedIndex = new BiwordInvertedIndex();
+		// 	Index biword = biwordInvertedIndex.getDictIndex();
+		// }
 		result = mComponents.get(0).getPostings(index);
 		for (int i = 1; i < mComponents.size(); i++) {
 			List<Posting> postingList1 = mComponents.get(i).getPostings(index);
