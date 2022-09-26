@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
+import me.tongfei.progressbar.*;
 
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
@@ -139,14 +140,17 @@ public class TermDocumentIndexer {
 	}
 
 	private static Index indexCorpus(DocumentCorpus corpus) throws IOException {
+		ProgressBar pb = new ProgressBar("Indexing", 36803);
 		long startTime = System.currentTimeMillis(); // Start time to build positional Inverted Index
-		System.out.println("Indexing...");
+		//System.out.println("Indexing...");
+		pb.start();
 
 		PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
 		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
 
 		// Add terms to the inverted index with addPosting.
 		for (Document d : corpus.getDocuments()) {
+			pb.step();
 			Reader content = d.getContent();
 
 			// Tokenize the document's content by constructing an EnglishTokenStream around
@@ -171,6 +175,7 @@ public class TermDocumentIndexer {
 			englishTokenStream.close();
 		}
 
+		pb.stop();
 		long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
 
 		System.out.println(
