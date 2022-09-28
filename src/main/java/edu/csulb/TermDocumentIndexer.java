@@ -7,10 +7,10 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
-import me.tongfei.progressbar.*;
 
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
@@ -70,7 +70,7 @@ public class TermDocumentIndexer {
 		return;
 	}
 
-	private static boolean isValidDirectory(String directoryPath) {
+	public static boolean isValidDirectory(String directoryPath) {
 		boolean isValidDirectory = Files.isDirectory(Paths.get(directoryPath));
 		if (!isValidDirectory)
 			System.out.println("Invalid directory path");
@@ -79,6 +79,8 @@ public class TermDocumentIndexer {
 
 	private static void findQuery(String query, Index index, DocumentCorpus corpus, Scanner sc) {
 		int queryFoundInFilesCount = 0;
+		List <List<Integer>> DocumentList = new ArrayList<>();
+		List <Integer> positionsList = new ArrayList<>(); 
 
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
 		QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
@@ -87,13 +89,17 @@ public class TermDocumentIndexer {
 			for (Posting p : queryComponent.getPostings(index)) {
 				queryFoundInFilesCount++;
 				Document queryFoundInDocument = corpus.getDocument(p.getDocumentId());
+				positionsList.add(p.getDocumentId() + 1);
 				System.out.println(queryFoundInDocument.getTitle()
 						+ " (FileName: "
 						+ ((FileDocument) queryFoundInDocument).getFilePath().getFileName().toString()
 						+ ")");
+				p.getPositions().forEach(Position -> positionsList.add(Position + 1));
 			}
+			DocumentList.add(positionsList);
+			System.out.println(DocumentList);
 
-			System.out.println("Query found in files: " + queryFoundInFilesCount);
+			System.out.println(" Query found in files: " + queryFoundInFilesCount);
 			if (queryFoundInFilesCount > 0) {
 				// Ask the user if they would like to select a document to view
 				System.out.print("Select a document to view (y/n): ");
@@ -111,7 +117,7 @@ public class TermDocumentIndexer {
 		}
 	}
 
-	private static boolean processSpecialQueries(String query, AdvancedTokenProcessor processor, Index index) {
+	public static boolean processSpecialQueries(String query, AdvancedTokenProcessor processor, Index index) {
 		if (query.equals(":q")) {
 		} else if (query.startsWith(":stem ")) {
 			query = query.replaceAll(":stem ", "").trim();
@@ -139,18 +145,14 @@ public class TermDocumentIndexer {
 		return true;
 	}
 
-	private static Index indexCorpus(DocumentCorpus corpus) throws IOException {
-		ProgressBar pb = new ProgressBar("Indexing", 36803);
+	public static Index indexCorpus(DocumentCorpus corpus) throws IOException {
 		long startTime = System.currentTimeMillis(); // Start time to build positional Inverted Index
-		//System.out.println("Indexing...");
-		pb.start();
-
+		System.out.println("Indexing...");
 		PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
 		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
 
 		// Add terms to the inverted index with addPosting.
 		for (Document d : corpus.getDocuments()) {
-			pb.step();
 			Reader content = d.getContent();
 
 			// Tokenize the document's content by constructing an EnglishTokenStream around
@@ -175,7 +177,6 @@ public class TermDocumentIndexer {
 			englishTokenStream.close();
 		}
 
-		pb.stop();
 		long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
 
 		System.out.println(
@@ -186,7 +187,7 @@ public class TermDocumentIndexer {
 	}
 
 	// Generic file reader
-	public static void readFile(String filepath) throws IOException {
+	public static BufferedReader readFile(String filepath) throws IOException {
 		BufferedReader in;
 		in = new BufferedReader(new FileReader(filepath));
 		String line = in.readLine();
@@ -195,5 +196,6 @@ public class TermDocumentIndexer {
 			line = in.readLine();
 		}
 		in.close();
+		return in;
 	}
 }
