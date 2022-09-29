@@ -20,7 +20,7 @@ import cecs429.text.AdvancedTokenProcessor;
 import edu.csulb.TermDocumentIndexer;
 
 public class PositionalInvertedIndexTest{
-    private static String newDirectoryPath = "C:/test_docs", fileExtension = ".json"; // Directory name where the corpus resides
+    private static String newDirectoryPath = "src/test/java", fileExtension = ".json"; // Directory name where the corpus resides
     private Index index = null;
     private DocumentCorpus corpus = null;
     private AdvancedTokenProcessor processor;
@@ -58,6 +58,7 @@ public class PositionalInvertedIndexTest{
 			}
         }
         DocumentList.add(positionsList);
+        System.out.println(queryFoundInFilesCount);
 		System.out.println(DocumentList);
         return DocumentList;
     }
@@ -98,7 +99,8 @@ public class PositionalInvertedIndexTest{
     @Test
     void validateSpecialQueries(){
         assertEquals(true ,TermDocumentIndexer.processSpecialQueries(":index C:/test_docs", processor, index));   
-        assertEquals(true, TermDocumentIndexer.processSpecialQueries(":stem Playing football in the evening", processor, index));           
+        assertEquals(true, TermDocumentIndexer.processSpecialQueries(":stem Playing football in the evening", processor, index));    
+        assertEquals(true, TermDocumentIndexer.processSpecialQueries(":stem Playing", processor, index));    
         assertEquals(true, TermDocumentIndexer.processSpecialQueries(":vocab", processor, index));
         assertEquals(true, TermDocumentIndexer.processSpecialQueries(":q", processor, index));
     }
