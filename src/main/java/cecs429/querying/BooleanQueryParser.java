@@ -1,6 +1,7 @@
 package cecs429.querying;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -148,7 +149,29 @@ public class BooleanQueryParser {
 			++startIndex;
 		}
 
-		if(subquery.charAt(startIndex) != '\"'){
+		if(subquery.charAt(startIndex) == '['){
+			// Since startIndex is at starting of the quote
+			startIndex++;
+			// Locate the next space to find the end of this literal.
+			int nextBracket = subquery.indexOf(']', startIndex);
+
+			if (nextBracket < 0) {
+				// No more literals in this subquery.
+				lengthOut = subLength - startIndex;
+			} else {
+				lengthOut = nextBracket - startIndex;
+			}
+
+			subquery = subquery.substring(startIndex, startIndex + lengthOut);
+			String splittedTerms[] =  subquery.split("\\s+(near/)?");
+
+			List<String> terms = Arrays.asList(splittedTerms);
+			// This is a term literal containing a single term.
+			return new Literal(
+					new StringBounds(startIndex - 1, lengthOut + 2),
+					new NearLiteral(terms));
+		}	
+		else if(subquery.charAt(startIndex) != '\"'){
 			// Locate the next space to find the end of this literal.
 			int nextSpace = subquery.indexOf(' ', startIndex);
 
