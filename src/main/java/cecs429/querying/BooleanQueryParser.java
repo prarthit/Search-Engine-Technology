@@ -17,17 +17,20 @@ public class BooleanQueryParser {
 	private static class StringBounds {
 		int start;
 		int length;
+
 		StringBounds(int start, int length) {
 			this.start = start;
 			this.length = length;
 		}
 	}
+
 	/**
 	 * Encapsulates a QueryComponent and the StringBounds that led to its parsing.
 	 */
 	private static class Literal {
 		StringBounds bounds;
 		QueryComponent literalComponent;
+
 		Literal(StringBounds bounds, QueryComponent literalComponent) {
 			this.bounds = bounds;
 			this.literalComponent = literalComponent;
@@ -149,7 +152,7 @@ public class BooleanQueryParser {
 			++startIndex;
 		}
 
-		if(subquery.charAt(startIndex) == '['){
+		if (subquery.charAt(startIndex) == '[') {
 			// Since startIndex is at starting of the quote
 			startIndex++;
 			// Locate the next space to find the end of this literal.
@@ -163,15 +166,14 @@ public class BooleanQueryParser {
 			}
 
 			subquery = subquery.substring(startIndex, startIndex + lengthOut);
-			String splittedTerms[] =  subquery.split("\\s+(near/)?");
+			String splittedTerms[] = subquery.split("\\s+(near/)?");
 
 			List<String> terms = Arrays.asList(splittedTerms);
 			// This is a term literal containing a single term.
 			return new Literal(
 					new StringBounds(startIndex - 1, lengthOut + 2),
 					new NearLiteral(terms));
-		}	
-		else if(subquery.charAt(startIndex) != '\"'){
+		} else if (subquery.charAt(startIndex) != '\"') {
 			// Locate the next space to find the end of this literal.
 			int nextSpace = subquery.indexOf(' ', startIndex);
 
@@ -186,8 +188,7 @@ public class BooleanQueryParser {
 			return new Literal(
 					new StringBounds(startIndex, lengthOut),
 					new TermLiteral(subquery.substring(startIndex, startIndex + lengthOut)));
-		}
-		else{
+		} else {
 			// Since startIndex is at starting of the quote
 			startIndex++;
 			// Locate the next space to find the end of this literal.

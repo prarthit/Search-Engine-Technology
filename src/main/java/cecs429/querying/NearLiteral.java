@@ -17,12 +17,14 @@ public class NearLiteral implements QueryComponent {
 	// The list of individual terms in the phrase.
 	private List<String> mTerms = new ArrayList<>();
 	private Integer kNear = 1;
+
 	/**
 	 * Constructs a PhraseLiteral with the given individual phrase terms.
 	 */
 	public NearLiteral(List<String> terms) {
 		mTerms.addAll(terms);
 	}
+
 	/**
 	 * Constructs a PhraseLiteral given a string with one or more individual terms
 	 * separated by spaces.
@@ -34,15 +36,15 @@ public class NearLiteral implements QueryComponent {
 	@Override
 	public List<Posting> getPostings(Index index) {
 		// because our terms list contains term1, kNear, term2
-		if(mTerms.size() < 3){
+		if (mTerms.size() < 3) {
 			return new ArrayList<>();
 		}
 		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
 		String processedQuery = processor.processQuery(mTerms.get(0));
 		List<Posting> result = index.getPostings(processedQuery);
 
-		for (int i = 2; i < mTerms.size(); i+=2) {
-			kNear = Integer.parseInt(mTerms.get(i-1));
+		for (int i = 2; i < mTerms.size(); i += 2) {
+			kNear = Integer.parseInt(mTerms.get(i - 1));
 			List<Posting> literalPostings = index.getPostings(processor.processQuery(mTerms.get(i)));
 			result = positionalIntersect(result, literalPostings, kNear);
 		}
@@ -50,8 +52,8 @@ public class NearLiteral implements QueryComponent {
 		return result;
 	}
 
-
-	private List<Posting> positionalIntersect(List<Posting> literalPostings1, List<Posting> literalPostings2, Integer kNear) {
+	private List<Posting> positionalIntersect(List<Posting> literalPostings1, List<Posting> literalPostings2,
+			Integer kNear) {
 		List<Posting> res = new ArrayList<>();
 		int len1 = literalPostings1.size();
 		int len2 = literalPostings2.size();
@@ -70,27 +72,26 @@ public class NearLiteral implements QueryComponent {
 				int plen2 = postingPosition2.size();
 
 				int k = kNear;
-				while(k > 0){
+				while (k > 0) {
 					int m = 0;
 					int n = 0;
-					while(m != plen1 && n != plen2){
+					while (m != plen1 && n != plen2) {
 						int mPosition = postingPosition1.get(m);
 						int nPosition = postingPosition2.get(n);
-	
-						if(nPosition - mPosition == k){
+
+						if (nPosition - mPosition == k) {
 							documentPositions.add(nPosition);
 							m++;
 							n++;
-						}else if(mPosition >= nPosition){
+						} else if (mPosition >= nPosition) {
 							n++;
-						}
-						else{
+						} else {
 							m++;
 						}
 					}
 					k--;
 				}
-				if(documentPositions.size() != 0){
+				if (documentPositions.size() != 0) {
 					res.add(new Posting(p1.getDocumentId(), documentPositions));
 				}
 				i++;
