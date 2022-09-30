@@ -22,13 +22,9 @@ import cecs429.indexing.Index;
 import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.indexing.Posting;
 import cecs429.querying.BooleanQueryParser;
-import cecs429.querying.PhraseLiteral;
 import cecs429.querying.QueryComponent;
 import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.EnglishTokenStream;
-
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 public class TermDocumentIndexer {
 	private static String prevDirectoryPath = "", newDirectoryPath = ""; // Directory name where the corpus resides

@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
-import cecs429.text.AdvancedTokenProcessor;
 
 /**
  * An OrQuery composes other QueryComponents and merges their postings with a
