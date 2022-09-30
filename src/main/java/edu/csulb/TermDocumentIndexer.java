@@ -158,9 +158,6 @@ public class TermDocumentIndexer {
 		PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
 		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
 
-		// Start time to build positional Iverted Index
-		startTime = System.nanoTime();
-
 		// Add terms to the inverted index with addPosting.
 		for (Document d : corpus.getDocuments()) {
 			Reader content = d.getContent();
@@ -173,7 +170,6 @@ public class TermDocumentIndexer {
 			// using a BasicTokenProcessor, and adding them to the
 			// positional inverted index dictionary.
 			Iterator<String> tokens = englishTokenStream.getTokens().iterator();
-
 			int position = 0; // Position of term in document
 			while (tokens.hasNext()) {
 				List<String> terms = processor.processToken(tokens.next());
@@ -191,25 +187,21 @@ public class TermDocumentIndexer {
 		long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
 
 		System.out.println(
-				"Time taken to build inverted positional inverted index: " + ((endTime - startTime) / 1000)
+				"Time taken to build positional inverted index: " + ((endTime - startTime) / 1000)
 						+ " seconds");
 
 		return positionalInvertedIndex;
 	}
 
 	private static Index biwordIndexCorpus(DocumentCorpus corpus) throws IOException {
-		long startTime; // Start time to build positional Inverted Index
-		long endTime; // End time to build positional Inverted Index
+		long startTime = System.currentTimeMillis(); // Start time to build biword Inverted Index
+		System.out.println("Indexing...");
 
 		BiwordInvertedIndex biwordInvertedIndex = new BiwordInvertedIndex();
 		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
 
-		// Start time to build biword Iverted Index
-		startTime = System.nanoTime();
-
 		// Add terms to the inverted index with addPosting.
 		for (Document d : corpus.getDocuments()) {
-			System.out.println("Found document " + d.getTitle());
 			Reader content = d.getContent();
 
 			// Tokenize the document's content by constructing an EnglishTokenStream around
@@ -218,9 +210,8 @@ public class TermDocumentIndexer {
 
 			// Iterate through the tokens in the document, processing them
 			// using a BasicTokenProcessor, and adding them to the
-			// positional inverted index dictionary.
+			// biword inverted index dictionary.
 			Iterator<String> tokens = englishTokenStream.getTokens().iterator();
-
 			// Build biword inverted index
 			buildBiwordIndex(d, tokens, processor, biwordInvertedIndex);
 
@@ -228,11 +219,11 @@ public class TermDocumentIndexer {
 			englishTokenStream.close();
 		}
 
-		// end time to build inverted biword index
-		endTime = System.nanoTime();
-		// total time taken to build inverted positional index
+		long endTime = System.currentTimeMillis(); // End time to build biword Inverted Index
+
 		System.out.println(
-				"Time taken to build inverted biword index: " + ((endTime - startTime) / 1000000000) + " seconds");
+				"Time taken to build biword inverted index: " + ((endTime - startTime) / 1000)
+						+ " seconds");
 
 		return biwordInvertedIndex;
 	}

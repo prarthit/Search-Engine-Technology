@@ -6,21 +6,20 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Implements a Positional Inverted Index
+ * Implements a Biword Inverted Index
  */
 public class BiwordInvertedIndex implements Index {
 	private final HashMap<String, List<Posting>> dict;
 
 	/**
-	 * Constructs an empty positional inverted index
+	 * Constructs an empty Biword inverted index
 	 */
 	public BiwordInvertedIndex() {
 		dict = new HashMap<String, List<Posting>>();
 	}
 
 	/**
-	 * Associates the given documentId and position with the given term in the
-	 * index.
+	 * Associates the given documentId with the given term in the index.
 	 */
 	public void addTerm(Biword term, int documentId) {
 		ArrayList<Posting> postings = (ArrayList<Posting>) dict.computeIfAbsent(term.toString(),

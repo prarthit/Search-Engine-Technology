@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import cecs429.indexing.BiwordInvertedIndex;
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
 
