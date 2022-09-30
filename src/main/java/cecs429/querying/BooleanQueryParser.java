@@ -153,7 +153,7 @@ public class BooleanQueryParser {
 		}
 
 		if (subquery.charAt(startIndex) == '[') {
-			// Since startIndex is at starting of the quote
+			// Since startIndex is at starting of the bracket
 			startIndex++;
 			// Locate the next space to find the end of this literal.
 			int nextBracket = subquery.indexOf(']', startIndex);
@@ -165,11 +165,11 @@ public class BooleanQueryParser {
 				lengthOut = nextBracket - startIndex;
 			}
 
-			subquery = subquery.substring(startIndex, startIndex + lengthOut);
-			String splittedTerms[] = subquery.split("\\s+(near/)?");
+			String nearSubQuery = subquery.substring(startIndex, startIndex + lengthOut);
+			String splittedTerms[] = nearSubQuery.split("\\s+(near/)?");
 
 			List<String> terms = Arrays.asList(splittedTerms);
-			// This is a term literal containing a single term.
+			// This is a near literal containing a list of terms.
 			return new Literal(
 					new StringBounds(startIndex - 1, lengthOut + 2),
 					new NearLiteral(terms));

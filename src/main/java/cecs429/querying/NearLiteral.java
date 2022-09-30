@@ -1,7 +1,6 @@
 package cecs429.querying;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,23 +18,15 @@ public class NearLiteral implements QueryComponent {
 	private Integer kNear = 1;
 
 	/**
-	 * Constructs a PhraseLiteral with the given individual phrase terms.
+	 * Constructs a NearLiteral with the given list of terms.
 	 */
 	public NearLiteral(List<String> terms) {
 		mTerms.addAll(terms);
 	}
 
-	/**
-	 * Constructs a PhraseLiteral given a string with one or more individual terms
-	 * separated by spaces.
-	 */
-	public NearLiteral(String terms) {
-		mTerms.addAll(Arrays.asList(terms.split(" ")));
-	}
-
 	@Override
 	public List<Posting> getPostings(Index index) {
-		// because our terms list contains term1, kNear, term2
+		// because our terms list contains term1, kNear and term2
 		if (mTerms.size() < 3) {
 			return new ArrayList<>();
 		}
@@ -107,8 +98,8 @@ public class NearLiteral implements QueryComponent {
 
 	@Override
 	public String toString() {
-		return "[" +
-				String.join(" NEAR/ " + kNear, mTerms.stream().map(c -> c.toString()).collect(Collectors.toList()))
+		return "["
+				+ String.join(" NEAR/ " + kNear, mTerms.stream().map(c -> c.toString()).collect(Collectors.toList()))
 				+ "]";
 	}
 }
