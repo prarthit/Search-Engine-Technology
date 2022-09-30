@@ -5,34 +5,24 @@ package cecs429.indexing;
  */
 
 public class Biword {
-	private String firstWord;
-	private String secondWord;
+	private String firstTerm;
+	private String secondTerm;
 
-	public Biword(String firstWord, String secondWord) {
-		this.firstWord = firstWord;
-		this.secondWord = secondWord;
+	public Biword(String firstTerm, String secondTerm) {
+		this.firstTerm = firstTerm;
+		this.secondTerm = secondTerm;
 	}
 
-	public String getfirstWord() {
-		return firstWord;
+	public String getfirstTerm() {
+		return firstTerm;
 	}
 
-	public String getSecondWord() {
-		return secondWord;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (o instanceof Biword) {
-			if (((Biword) o).firstWord.equals(firstWord) && ((Biword) o).secondWord.equals(secondWord)) {
-				return true;
-			}
-		}
-		return false;
+	public String getSecondTerm() {
+		return secondTerm;
 	}
 
 	@Override
 	public String toString() {
-		return "[" + firstWord + ", " + secondWord + " ]";
+		return "[" + firstTerm + "," + secondTerm + "]";
 	}
 }

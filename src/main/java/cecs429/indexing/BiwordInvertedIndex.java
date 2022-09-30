@@ -9,13 +9,13 @@ import java.util.List;
  * Implements a Positional Inverted Index
  */
 public class BiwordInvertedIndex implements Index {
-	private final HashMap<Biword, List<Posting>> dict;
+	private final HashMap<String, List<Posting>> dict;
 
 	/**
 	 * Constructs an empty positional inverted index
 	 */
 	public BiwordInvertedIndex() {
-		dict = new HashMap<Biword, List<Posting>>();
+		dict = new HashMap<String, List<Posting>>();
 	}
 
 	/**
@@ -23,7 +23,7 @@ public class BiwordInvertedIndex implements Index {
 	 * index.
 	 */
 	public void addTerm(Biword term, int documentId) {
-		ArrayList<Posting> postings = (ArrayList<Posting>) dict.computeIfAbsent(term,
+		ArrayList<Posting> postings = (ArrayList<Posting>) dict.computeIfAbsent(term.toString(),
 				k -> new ArrayList<>());
 
 		Posting lastInsertedPosting = postings.size() != 0 ? postings.get(postings.size() - 1) : null;
@@ -43,15 +43,9 @@ public class BiwordInvertedIndex implements Index {
 
 	public List<String> getVocabulary() {
 		// Convert vocabulary set to list and sort it
-		List<Biword> biwordList= new ArrayList<>(dict.keySet());
-		List<String> vocabulary = new ArrayList<>();
-		for(Biword biword:biwordList){
-			vocabulary.add(biword.toString());
-		}
+		List<String> vocabulary = new ArrayList<>(dict.keySet());
 		Collections.sort(vocabulary);
 
 		return vocabulary;
 	}
 }
-
-

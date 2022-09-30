@@ -43,6 +43,7 @@ public class TermDocumentIndexer {
 
 		DocumentCorpus corpus = null;
 		Index index = null;
+		Index biwordIndex = null;
 		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
 
 		// Loop for taking search input query
@@ -58,6 +59,9 @@ public class TermDocumentIndexer {
 						.loadJsonDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()), fileExtension);
 				// Index the documents of the directory.
 				index = indexCorpus(corpus);
+
+				// Index the documents of the directory using Biword.
+				biwordIndex = biwordIndexCorpus(corpus);
 			}
 
 			System.out.print("\nEnter a search query: ");
@@ -69,7 +73,7 @@ public class TermDocumentIndexer {
 				if (query.equals(":q"))
 					break;
 			} else {
-				findQuery(query, index, corpus, sc);
+				findQuery(query, index, biwordIndex, corpus, sc);
 			}
 		}
 
@@ -83,10 +87,12 @@ public class TermDocumentIndexer {
 		return isValidDirectory;
 	}
 
-	private static void findQuery(String query, Index index, DocumentCorpus corpus, Scanner sc) {
+	private static void findQuery(String query, Index index, Index biwordIndex, DocumentCorpus corpus, Scanner sc) {
 		int queryFoundInFilesCount = 0;
 
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
+		booleanQueryParser.setBiwordIndex(biwordIndex);
+
 		QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
 
 		if (queryComponent != null) {
@@ -231,17 +237,19 @@ public class TermDocumentIndexer {
 		return biwordInvertedIndex;
 	}
 
-	private static void buildBiwordIndex(Document d, Iterator<String> tokens, AdvancedTokenProcessor processor, BiwordInvertedIndex biwordInvertedIndex) {
+	private static void buildBiwordIndex(Document d, Iterator<String> tokens, AdvancedTokenProcessor processor,
+			BiwordInvertedIndex biwordInvertedIndex) {
 		String prevTerm = null;
 		while (tokens.hasNext()) {
 			List<String> terms = processor.processToken(tokens.next());
 			int documentId = d.getId();
-			if(terms.size() == 1){
-				if(prevTerm != null){
-					biwordInvertedIndex.addTerm(new Biword(prevTerm, terms.get(0)), documentId); 
+			if (terms.size() == 1) {
+				if (prevTerm != null) {
+					biwordInvertedIndex.addTerm(new Biword(prevTerm, terms.get(0)), documentId);
 				}
-				prevTerm = terms.get(0);;
-			}else{
+				prevTerm = terms.get(0);
+				;
+			} else {
 				// generate biwords when tokens are of form "co-education"
 				for (Biword biword : generateBiwords(terms, prevTerm)) {
 					biwordInvertedIndex.addTerm(biword, documentId);
@@ -251,32 +259,15 @@ public class TermDocumentIndexer {
 	}
 
 	private static List<Biword> generateBiwords(List<String> terms, String prevTerm) {
-        List<Biword> biwordResult = new ArrayList<Biword>();
-        for (String term : terms) {
-            if (prevTerm != null){
-                Biword biword = new Biword(prevTerm, term);
-                biwordResult.add(biword);
-            }
-			prevTerm = term;
-        }
-        return biwordResult;
-    }
-
-	private static boolean traverseFiles(File inputFile) {
-		File[] listFiles = inputFile.listFiles();
-		if (listFiles == null) {
-			return false;
-		}
-		for (File file : listFiles) {
-			if (file.isDirectory()) {
-				System.out.println("Directory:" + file.getAbsolutePath());
-				traverseFiles(file);
-			} else {
-				System.out.println("\tFile:" + file.getAbsolutePath());
+		List<Biword> biwordResult = new ArrayList<Biword>();
+		for (String term : terms) {
+			if (prevTerm != null) {
+				Biword biword = new Biword(prevTerm, term);
+				biwordResult.add(biword);
 			}
+			prevTerm = term;
 		}
-
-		return true;
+		return biwordResult;
 	}
 
 	// Generic file reader
