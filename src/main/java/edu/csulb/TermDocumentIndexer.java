@@ -1,9 +1,11 @@
 package edu.csulb;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -29,58 +31,59 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 public class TermDocumentIndexer {
-	public static String directoryName = ""; // Directory name entered by the user.
-	public static boolean isValidDirectory = false;
-	private static boolean isIndexSpecialQueryCalled = false;
+	private static String prevDirectoryPath = "", newDirectoryPath = ""; // Directory name where the corpus resides
 
 	public static void main(String[] args) throws IOException {
-		String fileExtension = ".json";
 		Scanner sc = new Scanner(System.in);
 
 		do {
-			if (!isValidDirectory) {
-				// Input Directory from user
-				System.out.print("Enter a directory name: ");
+			System.out.print("Enter directory path: ");
+			newDirectoryPath = sc.nextLine().trim();
+		} while (!isValidDirectory(newDirectoryPath));
 
-				directoryName = sc.nextLine().trim();
-				// Print all files and folders in the Input Directory from user
-				isValidDirectory = traverseFiles(new File(directoryName));
-				continue;
+		DocumentCorpus corpus = null;
+		Index index = null;
+		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
+
+		// Loop for taking search input query
+		while (true) {
+			// If a newDirectory is provided, build a new index
+			if (!prevDirectoryPath.equals(newDirectoryPath)) {
+				prevDirectoryPath = newDirectoryPath;
+
+				String fileExtension = ".json";
+				// Create a DocumentCorpus to load .json documents from the user input
+				// directory.
+				corpus = DirectoryCorpus
+						.loadJsonDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()), fileExtension);
+				// Index the documents of the directory.
+				index = indexCorpus(corpus);
 			}
-			// Create a DocumentCorpus to load .json documents from the user input
-			// directory.
-			DocumentCorpus corpus = DirectoryCorpus
-					.loadJsonDirectory(Paths.get(new File(directoryName).getAbsolutePath()), fileExtension);
-			// Index the documents of the directory using positional inverted index.
-			Index index = indexCorpus(corpus);
 
-			// Index the documents of the directory using Biword.
-			Index biwordIndex = biwordIndexCorpus(corpus);
-
+			System.out.print("\nEnter a search query: ");
 			// Get the query from user input
-			String query = "";
+			String query = sc.nextLine().toLowerCase();
 
-			AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
-
-			// When user inputs this string, quit the program
-			while (!query.toLowerCase().startsWith(":q")) {
-				System.out.print("\nEnter a term to search: ");
-				query = sc.nextLine();
-				
-				boolean hasSpecialQueryCalled = processSpecialQueries(query, processor, index);
-				if (isIndexSpecialQueryCalled) {
-					isIndexSpecialQueryCalled = false;
+			boolean isSpecialQuery = processSpecialQueries(query, processor, index);
+			if (isSpecialQuery) {
+				if (query.equals(":q"))
 					break;
-				}
-				if (!hasSpecialQueryCalled) {
-					findQuery(query, index, biwordIndex, corpus, sc);
-				}
+			} else {
+				findQuery(query, index, corpus, sc);
 			}
-		} while (!directoryName.isEmpty());
-		sc.close();
+		}
+
+		return;
 	}
 
-	private static void findQuery(String query, Index index, Index biwordIndex, DocumentCorpus corpus, Scanner sc) {
+	private static boolean isValidDirectory(String directoryPath) {
+		boolean isValidDirectory = Files.isDirectory(Paths.get(directoryPath));
+		if (!isValidDirectory)
+			System.out.println("Invalid directory path");
+		return isValidDirectory;
+	}
+
+	private static void findQuery(String query, Index index, DocumentCorpus corpus, Scanner sc) {
 		int queryFoundInFilesCount = 0;
 
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
@@ -89,56 +92,53 @@ public class TermDocumentIndexer {
 		if (queryComponent != null) {
 			for (Posting p : queryComponent.getPostings(index)) {
 				queryFoundInFilesCount++;
-				System.out.println("Document: " + corpus.getDocument(p.getDocumentId()).getTitle()
+				Document queryFoundInDocument = corpus.getDocument(p.getDocumentId());
+				System.out.println(queryFoundInDocument.getTitle()
 						+ " (FileName: "
-						+ ((FileDocument) corpus.getDocument(p.getDocumentId())).getFilePath().getFileName()
-								.toString()
-						+ " ID: " +
-						corpus.getDocument(p.getDocumentId()).getId() + ")");
+						+ ((FileDocument) queryFoundInDocument).getFilePath().getFileName().toString()
+						+ ")");
 			}
 
 			System.out.println("Query found in files: " + queryFoundInFilesCount);
 			if (queryFoundInFilesCount > 0) {
 				// Ask the user if they would like to select a document to view
-				System.out.print("Select a document to view (y/n):");
-				char ch = sc.nextLine().charAt(0);
-				if (ch == 'y' || ch == 'Y') {
-					System.out.print("Enter document name:");
+				System.out.print("Select a document to view (y/n): ");
+				String ch = sc.nextLine().toLowerCase();
+				if (ch.equals("y")) {
+					System.out.print("Enter document name: ");
 					String fileName = sc.nextLine();
-					readFile(fileName, directoryName);
+					try {
+						readFile(newDirectoryPath + "/" + fileName);
+					} catch (IOException e) {
+						System.out.println("Unable to read file");
+					}
 				}
 			}
 		}
 	}
 
 	private static boolean processSpecialQueries(String query, AdvancedTokenProcessor processor, Index index) {
-		if (query.toLowerCase().startsWith(":q")) {
-			directoryName = "";
-		} else if (query.toLowerCase().startsWith(":stem")) {
-			query = query.replaceAll(":stem", "").trim();
+		if (query.equals(":q")) {
+		} else if (query.startsWith(":stem ")) {
+			query = query.replaceAll(":stem ", "").trim();
 
 			List<String> stemmedTerms = processor.processToken(query);
 			stemmedTerms.forEach(stemmedTerm -> System.out.println(stemmedTerm));
-		} else if (query.toLowerCase().startsWith(":index")) {
-			query = query.replaceAll(":index", "").trim();
+		} else if (query.startsWith(":index ")) {
+			query = query.replaceAll(":index ", "").trim();
 
-			isValidDirectory = traverseFiles(new File(query));
-			if (isValidDirectory) {
-				directoryName = query;
-				isIndexSpecialQueryCalled = true;
-			} else {
-				System.out.println("Please try searching another query.");
+			if (isValidDirectory(query)) {
+				newDirectoryPath = query;
 			}
-		} else if (query.toLowerCase().startsWith(":vocab")) {
-			query = query.replaceAll(":vocab", "").trim();
-
-			List<String> topThousandTerms = index.getVocabulary();
-			int sizeVocabularyterms = topThousandTerms.size();
-			for (int i = 0; i < sizeVocabularyterms && i != 1000; i++) {
-				System.out.println(topThousandTerms.get(i));
+		} else if (query.equals(":vocab")) {
+			List<String> vocabulary = index.getVocabulary();
+			int termsCount = Math.min(vocabulary.size(), 1000);
+			for (int i = 0; i < termsCount; i++) {
+				System.out.println(vocabulary.get(i));
 			}
-			System.out.println(sizeVocabularyterms);
+			System.out.println(vocabulary.size());
 		} else {
+			// The query is not a special query
 			return false;
 		}
 
@@ -146,8 +146,8 @@ public class TermDocumentIndexer {
 	}
 
 	private static Index indexCorpus(DocumentCorpus corpus) throws IOException {
-		long startTime; // Start time to build positional Inverted Index
-		long endTime; // End time to build positional Inverted Index
+		long startTime = System.currentTimeMillis(); // Start time to build positional Inverted Index
+		System.out.println("Indexing...");
 
 		PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
 		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
@@ -157,7 +157,6 @@ public class TermDocumentIndexer {
 
 		// Add terms to the inverted index with addPosting.
 		for (Document d : corpus.getDocuments()) {
-			System.out.println("Found document " + d.getTitle());
 			Reader content = d.getContent();
 
 			// Tokenize the document's content by constructing an EnglishTokenStream around
@@ -183,11 +182,11 @@ public class TermDocumentIndexer {
 			englishTokenStream.close();
 		}
 
-		// end time to build inverted positional index
-		endTime = System.nanoTime();
-		// total time taken to build inverted positional index
+		long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
+
 		System.out.println(
-				"Time taken to build inverted positional index: " + ((endTime - startTime) / 1000000000) + " seconds");
+				"Time taken to build inverted positional inverted index: " + ((endTime - startTime) / 1000)
+						+ " seconds");
 
 		return positionalInvertedIndex;
 	}
@@ -280,15 +279,15 @@ public class TermDocumentIndexer {
 		return true;
 	}
 
-	public static void readFile(String fileName, String fileDirectory) {
-		JSONParser parser = new JSONParser();
-		try {
-			Object obj = parser.parse(new FileReader(fileDirectory + "/" + fileName));
-			JSONObject jsonObject = (JSONObject) obj;
-			System.out.println(jsonObject.get("body"));
-		} catch (Exception e) {
-			System.out.println("Exception: " + e.getMessage());
-			System.out.println("Please try searching again.");
+	// Generic file reader
+	public static void readFile(String filepath) throws IOException {
+		BufferedReader in;
+		in = new BufferedReader(new FileReader(filepath));
+		String line = in.readLine();
+		while (line != null) {
+			System.out.println(line);
+			line = in.readLine();
 		}
+		in.close();
 	}
 }

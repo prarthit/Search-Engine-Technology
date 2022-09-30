@@ -1,7 +1,6 @@
 package cecs429.querying;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,7 +48,7 @@ public class OrQuery implements QueryComponent {
 			int docId2 = literalPostings2.get(j).getDocumentId();
 
 			int docIdToBeInserted = 0;
-			if(docId1<docId2){
+			if (docId1 < docId2) {
 				// Insert docId1 in result
 				docIdToBeInserted = docId1;
 				i++;
@@ -60,10 +59,23 @@ public class OrQuery implements QueryComponent {
 			}
 
 			// If the last inserted document id is same don't insert it into the list
-			if(result.size()==0 || result.get(result.size()-1).getDocumentId()!=docIdToBeInserted){
+			if (result.size() == 0 || result.get(result.size() - 1).getDocumentId() != docIdToBeInserted) {
 				result.add(new Posting(docIdToBeInserted));
 			}
 		}
+
+		while (i < len1) {
+			int docIdToBeInserted = literalPostings1.get(i).getDocumentId();
+			result.add(new Posting(docIdToBeInserted));
+			i++;
+		}
+
+		while (j < len2) {
+			int docIdToBeInserted = literalPostings2.get(j).getDocumentId();
+			result.add(new Posting(docIdToBeInserted));
+			j++;
+		}
+
 		return result;
 	}
 
