@@ -77,7 +77,7 @@ public class TermDocumentIndexer {
 		return isValidDirectory;
 	}
 
-	private static void findQuery(String query, Index index, DocumentCorpus corpus, Scanner sc) {
+	public static void findQuery(String query, Index index, DocumentCorpus corpus, Scanner sc) {
 		int queryFoundInFilesCount = 0;
 		List <List<Integer>> DocumentList = new ArrayList<>();
 		List <Integer> positionsList = new ArrayList<>(); 
@@ -121,7 +121,6 @@ public class TermDocumentIndexer {
 		if (query.equals(":q")) {
 		} else if (query.startsWith(":stem ")) {
 			query = query.replaceAll(":stem ", "").trim();
-
 			List<String> stemmedTerms = processor.processToken(query);
 			stemmedTerms.forEach(stemmedTerm -> System.out.println(stemmedTerm));
 		} else if (query.startsWith(":index ")) {
@@ -195,7 +194,6 @@ public class TermDocumentIndexer {
 			System.out.println(line);
 			line = in.readLine();
 		}
-		in.close();
 		return in;
 	}
 }
