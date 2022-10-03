@@ -1,13 +1,14 @@
 package cecs429.indexing;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
 /**
  * Implements a Biword Inverted Index
  */
-public class BiwordInvertedIndex extends PositionalInvertedIndex {
+public class BiwordInvertedIndex implements Index {
 	private final HashMap<String, List<Posting>> dict;
 
 	/**
@@ -33,4 +34,17 @@ public class BiwordInvertedIndex extends PositionalInvertedIndex {
 		}
 	}
 
+	@Override
+	public List<Posting> getPostings(String term) {
+		List<Posting> postings = (List<Posting>) dict.getOrDefault(term, new ArrayList<Posting>());
+		return postings;
+	}
+
+	public List<String> getVocabulary() {
+		// Convert vocabulary set to list and sort it
+		List<String> vocabulary = new ArrayList<>(dict.keySet());
+		Collections.sort(vocabulary);
+
+		return vocabulary;
+	}
 }
