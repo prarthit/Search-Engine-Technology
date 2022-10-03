@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import cecs429.indexing.Biword;
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
 import cecs429.text.AdvancedTokenProcessor;
@@ -42,8 +41,7 @@ public class PhraseLiteral implements QueryComponent {
 
 		if (mTerms.size() == 2) {
 			return _biwordIndex.getPostings(
-					new Biword(processor.processQuery(mTerms.get(0)), processor.processQuery(mTerms.get(1)))
-							.toString());
+					processor.processQuery(mTerms.get(0)) + " " + processor.processQuery(mTerms.get(1)));
 		}
 
 		String processedQuery = processor.processQuery(mTerms.get(0));

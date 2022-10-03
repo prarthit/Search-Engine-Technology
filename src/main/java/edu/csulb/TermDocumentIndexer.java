@@ -16,7 +16,6 @@ import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.documents.FileDocument;
-import cecs429.indexing.Biword;
 import cecs429.indexing.BiwordInvertedIndex;
 import cecs429.indexing.Index;
 import cecs429.indexing.PositionalInvertedIndex;
@@ -232,24 +231,23 @@ public class TermDocumentIndexer {
 			int documentId = d.getId();
 			if (terms.size() == 1) {
 				if (prevTerm != null) {
-					biwordInvertedIndex.addTerm(new Biword(prevTerm, terms.get(0)), documentId);
+					biwordInvertedIndex.addTerm(prevTerm + " " + terms.get(0), documentId);
 				}
 				prevTerm = terms.get(0);
 				;
 			} else {
-				// generate biwords when tokens are of form "co-education"
-				for (Biword biword : generateBiwords(terms, prevTerm)) {
+				for (String biword : generateBiwords(terms, prevTerm)) {
 					biwordInvertedIndex.addTerm(biword, documentId);
 				}
 			}
 		}
 	}
 
-	private static List<Biword> generateBiwords(List<String> terms, String prevTerm) {
-		List<Biword> biwordResult = new ArrayList<Biword>();
+	private static List<String> generateBiwords(List<String> terms, String prevTerm) {
+		List<String> biwordResult = new ArrayList<String>();
 		for (String term : terms) {
 			if (prevTerm != null) {
-				Biword biword = new Biword(prevTerm, term);
+				String biword = prevTerm + " " + term;
 				biwordResult.add(biword);
 			}
 			prevTerm = term;
