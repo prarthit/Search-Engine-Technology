@@ -53,7 +53,7 @@ public class PhraseLiteral implements QueryComponent {
 	@Override
 	public List<Posting> getPostings(Index index) {
 
-		if (mTerms.size() == 2) {
+		if (mTerms.size() == 2 && mBiwordIndex != null) {
 			String query1 = mTerms.get(0);
 			String query2 = mTerms.get(1);
 
