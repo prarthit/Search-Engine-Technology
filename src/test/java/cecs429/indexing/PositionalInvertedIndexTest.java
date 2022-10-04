@@ -9,8 +9,11 @@ import java.util.List;
 import org.junit.Test;
 
 public class PositionalInvertedIndexTest {
-    
-    PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
+    PositionalInvertedIndex positionalInvertedIndex;
+
+    public PositionalInvertedIndexTest(){
+        positionalInvertedIndex = new PositionalInvertedIndex();
+    }
 
     public boolean checkPostings(List<Posting> expected, List<Posting>actual){
         Boolean passCase = true;
@@ -80,7 +83,6 @@ public class PositionalInvertedIndexTest {
         expected.clear();
         expected.add(new Posting(3,3));
         assertEquals(true, checkPostings(expected, positionalInvertedIndex.getPostings("hell")));
-
     }
 
     //Check if correct vocabulary is built

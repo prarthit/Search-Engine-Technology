@@ -82,11 +82,7 @@ public class TermDocumentIndexer {
 		return isValidDirectory;
 	}
 
-<<<<<<< HEAD
-	public static void findQuery(String query, Index index, DocumentCorpus corpus, Scanner sc) {
-=======
 	private static void findQuery(String query, Index index, Index biwordIndex, DocumentCorpus corpus, Scanner sc) {
->>>>>>> Biword-index
 		int queryFoundInFilesCount = 0;
 		List <List<Integer>> DocumentList = new ArrayList<>();
 		List <Integer> positionsList = new ArrayList<>(); 
@@ -196,7 +192,7 @@ public class TermDocumentIndexer {
 		return positionalInvertedIndex;
 	}
 
-	private static Index biwordIndexCorpus(DocumentCorpus corpus) throws IOException {
+	public static Index biwordIndexCorpus(DocumentCorpus corpus) throws IOException {
 		long startTime = System.currentTimeMillis(); // Start time to build biword Inverted Index
 		System.out.println("Indexing...");
 

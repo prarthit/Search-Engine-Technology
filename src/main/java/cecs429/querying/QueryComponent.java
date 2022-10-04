@@ -14,4 +14,6 @@ public interface QueryComponent {
      * source.
      */
     List<Posting> getPostings(Index index);
+    // Checks whether query component is negative i.e NOT query
+    // boolean isNegative();
 }
