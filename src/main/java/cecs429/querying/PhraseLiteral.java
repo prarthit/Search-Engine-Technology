@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
 import cecs429.indexing.Posting;
+import cecs429.text.AdvancedTokenProcessor;
 
 /**
  * Represents a phrase literal consisting of one or more terms that must occur
@@ -17,22 +18,25 @@ public class PhraseLiteral implements QueryComponent {
 	// The list of individual terms in the phrase.
 	private List<String> mTerms = new ArrayList<>();
 	private KGramIndex mKGramIndex;
+	private Index mBiwordIndex;
 
 	/**
 	 * Constructs a PhraseLiteral with the given individual phrase terms.
 	 */
-	public PhraseLiteral(List<String> terms, KGramIndex kGramIndex) {
+	public PhraseLiteral(List<String> terms, KGramIndex kGramIndex, Index biwordIndex) {
 		mTerms.addAll(terms);
 		mKGramIndex = kGramIndex;
+		mBiwordIndex = biwordIndex;
 	}
 
 	/**
 	 * Constructs a PhraseLiteral given a string with one or more individual terms
 	 * separated by spaces.
 	 */
-	public PhraseLiteral(String terms, KGramIndex kGramIndex) {
+	public PhraseLiteral(String terms, KGramIndex kGramIndex, Index biwordIndex) {
 		mTerms.addAll(Arrays.asList(terms.split(" ")));
 		mKGramIndex = kGramIndex;
+		mBiwordIndex = biwordIndex;
 	}
 
 	// Convert a string query to a QueryComponent
@@ -48,6 +52,23 @@ public class PhraseLiteral implements QueryComponent {
 
 	@Override
 	public List<Posting> getPostings(Index index) {
+
+		if (mTerms.size() == 2 && mBiwordIndex != null) {
+			String query1 = mTerms.get(0);
+			String query2 = mTerms.get(1);
+
+			// If either of the both queries contains a wildcard,
+			// don't process it as a biword query
+			if (!query1.contains("*") && !query2.contains("*")) {
+				AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
+
+				String processedQuery1 = processor.processQuery(query1);
+				String processedQuery2 = processor.processQuery(query2);
+
+				return mBiwordIndex.getPostings(processedQuery1 + " " + processedQuery2);
+			}
+		}
+
 		// Convert raw query string into a term or wildcard literal
 		QueryComponent currQueryComponent = termToLiteral(mTerms.get(0));
 		List<Posting> result = currQueryComponent.getPostings(index);

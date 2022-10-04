@@ -3,6 +3,7 @@ package cecs429.querying;
 import java.util.ArrayList;
 import java.util.List;
 
+import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
 
 /**
@@ -13,6 +14,7 @@ import cecs429.indexing.KGramIndex;
  */
 public class BooleanQueryParser {
 	private KGramIndex kGramIndex; // k-gram index for wildcard literals
+	private Index biwordIndex;
 
 	/**
 	 * Identifies a portion of a string with a starting index and a length.
@@ -194,11 +196,15 @@ public class BooleanQueryParser {
 			// This is a term literal containing a single term.
 			return new Literal(
 					new StringBounds(startIndex - 1, lengthOut + 2),
-					new PhraseLiteral(terms, kGramIndex));
+					new PhraseLiteral(terms, kGramIndex, biwordIndex));
 		}
 	}
 
 	public void setKGramIndex(KGramIndex kGramIndex) {
 		this.kGramIndex = kGramIndex;
+	}
+
+	public void setBiwordIndex(Index biwordIndex) {
+		this.biwordIndex = biwordIndex;
 	}
 }
