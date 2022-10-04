@@ -64,6 +64,7 @@ public class AdvancedTokenProcessor implements TokenProcessor {
     // hyphen processing
     public String processQuery(String query) {
         String preProcessedQuery = preProcessToken(query);
+        preProcessedQuery = preProcessedQuery.replaceAll("-", ""); // Remove all hyphens
         String stemmedQuery = stemToken(preProcessedQuery);
         return stemmedQuery;
     }
