@@ -42,6 +42,10 @@ public class BooleanQueryParser {
 	 * representing the query.
 	 */
 	public QueryComponent parseQuery(String query) {
+		// When the input query is empty return null
+		if (query.isEmpty())
+			return null;
+
 		int start = 0;
 
 		// General routine: scan the query to identify a literal, and put that literal

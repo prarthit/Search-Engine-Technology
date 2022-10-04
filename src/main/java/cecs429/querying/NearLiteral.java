@@ -62,25 +62,22 @@ public class NearLiteral implements QueryComponent {
 				int plen1 = postingPosition1.size();
 				int plen2 = postingPosition2.size();
 
-				int k = kNear;
-				while (k > 0) {
-					int m = 0;
-					int n = 0;
-					while (m != plen1 && n != plen2) {
-						int mPosition = postingPosition1.get(m);
+				int m = 0;
+				int n = 0;
+				while (m != plen1) {
+					int mPosition = postingPosition1.get(m);
+					while (n != plen2) {
 						int nPosition = postingPosition2.get(n);
-
-						if (nPosition - mPosition == k) {
+						if (nPosition - mPosition > 0 && nPosition - mPosition <= kNear) {
 							documentPositions.add(nPosition);
-							m++;
 							n++;
-						} else if (mPosition >= nPosition) {
+						} else if (nPosition <= mPosition) {
 							n++;
 						} else {
-							m++;
+							break;
 						}
 					}
-					k--;
+					m++;
 				}
 				if (documentPositions.size() != 0) {
 					res.add(new Posting(p1.getDocumentId(), documentPositions));
