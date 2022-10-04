@@ -3,6 +3,8 @@ package cecs429.querying;
 import java.util.ArrayList;
 import java.util.List;
 
+import cecs429.indexing.KGramIndex;
+
 /**
  * Parses boolean queries according to the base requirements of the CECS 429
  * project.
@@ -10,23 +12,28 @@ import java.util.List;
  * queries... yet.
  */
 public class BooleanQueryParser {
+	private KGramIndex kGramIndex; // k-gram index for wildcard literals
+
 	/**
 	 * Identifies a portion of a string with a starting index and a length.
 	 */
 	private static class StringBounds {
 		int start;
 		int length;
+
 		StringBounds(int start, int length) {
 			this.start = start;
 			this.length = length;
 		}
 	}
+
 	/**
 	 * Encapsulates a QueryComponent and the StringBounds that led to its parsing.
 	 */
 	private static class Literal {
 		StringBounds bounds;
 		QueryComponent literalComponent;
+
 		Literal(StringBounds bounds, QueryComponent literalComponent) {
 			this.bounds = bounds;
 			this.literalComponent = literalComponent;
@@ -143,12 +150,13 @@ public class BooleanQueryParser {
 	private Literal findNextLiteral(String subquery, int startIndex) {
 		int subLength = subquery.length();
 		int lengthOut;
+
 		// Skip past white space.
 		while (subquery.charAt(startIndex) == ' ') {
 			++startIndex;
 		}
 
-		if(subquery.charAt(startIndex) != '\"'){
+		if (subquery.charAt(startIndex) != '\"') {
 			// Locate the next space to find the end of this literal.
 			int nextSpace = subquery.indexOf(' ', startIndex);
 
@@ -159,12 +167,18 @@ public class BooleanQueryParser {
 				lengthOut = nextSpace - startIndex;
 			}
 
+			String nextTerm = subquery.substring(startIndex, startIndex + lengthOut);
+			QueryComponent queryComponent;
+			if (nextTerm.contains("*") && kGramIndex != null)
+				queryComponent = new WildcardLiteral(nextTerm, kGramIndex);
+			else
+				queryComponent = new TermLiteral(nextTerm);
+
 			// This is a term literal containing a single term.
 			return new Literal(
 					new StringBounds(startIndex, lengthOut),
-					new TermLiteral(subquery.substring(startIndex, startIndex + lengthOut)));
-		}
-		else{
+					queryComponent);
+		} else {
 			// Since startIndex is at starting of the quote
 			startIndex++;
 			// Locate the next space to find the end of this literal.
@@ -180,7 +194,11 @@ public class BooleanQueryParser {
 			// This is a term literal containing a single term.
 			return new Literal(
 					new StringBounds(startIndex - 1, lengthOut + 2),
-					new PhraseLiteral(terms));
+					new PhraseLiteral(terms, kGramIndex));
 		}
+	}
+
+	public void setKGramIndex(KGramIndex kGramIndex) {
+		this.kGramIndex = kGramIndex;
 	}
 }

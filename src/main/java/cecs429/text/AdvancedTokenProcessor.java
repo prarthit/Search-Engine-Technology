@@ -23,13 +23,13 @@ public class AdvancedTokenProcessor implements TokenProcessor {
         return snowballStemmer.getCurrent();
     }
 
-    private String preProcessToken(String token) {
+    public String preProcessToken(String token) {
         // Remove non-alphanumeric characters from beginning of token
-        token = token.replaceAll("^\\W*", "");
+        token = token.replaceAll("^[^a-zA-Z0-9]*", "");
         // Remove all apostropes or quotation marks from token
         token = token.replaceAll("[\"'`]", "");
         // Remove non-alphanumeric characters from end of token
-        token = token.replaceAll("\\W*$", "");
+        token = token.replaceAll("[^a-zA-Z0-9]*$", "");
         token = token.toLowerCase();
 
         return token;
@@ -67,5 +67,11 @@ public class AdvancedTokenProcessor implements TokenProcessor {
         preProcessedQuery = preProcessedQuery.replaceAll("-", ""); // Remove all hyphens
         String stemmedQuery = stemToken(preProcessedQuery);
         return stemmedQuery;
+    }
+
+    // Process wildcard query
+    public String processWildcardQuery(String query) {
+        query = query.toLowerCase();
+        return query;
     }
 }
