@@ -47,31 +47,36 @@ public class OrQuery implements QueryComponent {
 			int docId2 = literalPostings2.get(j).getDocumentId();
 
 			int docIdToBeInserted = 0;
+			List<Integer> positionsToBeInserted = null;
 			if (docId1 < docId2) {
 				// Insert docId1 in result
 				docIdToBeInserted = docId1;
+				positionsToBeInserted = literalPostings1.get(i).getPositions();
 				i++;
 			} else {
 				// Insert docId2 in result
 				docIdToBeInserted = docId2;
+				positionsToBeInserted = literalPostings2.get(j).getPositions();
 				j++;
 			}
 
 			// If the last inserted document id is same don't insert it into the list
 			if (result.size() == 0 || result.get(result.size() - 1).getDocumentId() != docIdToBeInserted) {
-				result.add(new Posting(docIdToBeInserted));
+				result.add(new Posting(docIdToBeInserted, positionsToBeInserted));
 			}
 		}
 
 		while (i < len1) {
 			int docIdToBeInserted = literalPostings1.get(i).getDocumentId();
-			result.add(new Posting(docIdToBeInserted));
+			List<Integer> positionsToBeInserted = literalPostings1.get(i).getPositions();
+			result.add(new Posting(docIdToBeInserted, positionsToBeInserted));
 			i++;
 		}
 
 		while (j < len2) {
 			int docIdToBeInserted = literalPostings2.get(j).getDocumentId();
-			result.add(new Posting(docIdToBeInserted));
+			List<Integer> positionsToBeInserted = literalPostings2.get(j).getPositions();
+			result.add(new Posting(docIdToBeInserted, positionsToBeInserted));
 			j++;
 		}
 
