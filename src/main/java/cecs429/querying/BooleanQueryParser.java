@@ -211,7 +211,7 @@ public class BooleanQueryParser {
 					new PhraseLiteral(terms, _biwordIndex));
 		}
 	}
-
+	
 	public void setBiwordIndex(Index biwordIndex) {
 		_biwordIndex = biwordIndex;
 	}
