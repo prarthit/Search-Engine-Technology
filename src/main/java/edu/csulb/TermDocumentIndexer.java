@@ -16,6 +16,7 @@ import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.documents.FileDocument;
+import cecs429.indexing.BiwordInvertedIndex;
 import cecs429.indexing.Index;
 import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.indexing.Posting;
@@ -37,6 +38,7 @@ public class TermDocumentIndexer {
 
 		DocumentCorpus corpus = null;
 		Index index = null;
+		Index biwordIndex = null;
 		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
 
 		// Loop for taking search input query
@@ -52,6 +54,9 @@ public class TermDocumentIndexer {
 						.loadJsonDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()), fileExtension);
 				// Index the documents of the directory.
 				index = indexCorpus(corpus);
+
+				// Index the documents of the directory using Biword.
+				biwordIndex = biwordIndexCorpus(corpus);
 			}
 
 			System.out.print("\nEnter a search query: ");
@@ -63,7 +68,7 @@ public class TermDocumentIndexer {
 				if (query.equals(":q"))
 					break;
 			} else {
-				findQuery(query, index, corpus, sc);
+				findQuery(query, index, biwordIndex, corpus, sc);
 			}
 		}
 
@@ -77,12 +82,18 @@ public class TermDocumentIndexer {
 		return isValidDirectory;
 	}
 
+<<<<<<< HEAD
 	public static void findQuery(String query, Index index, DocumentCorpus corpus, Scanner sc) {
+=======
+	private static void findQuery(String query, Index index, Index biwordIndex, DocumentCorpus corpus, Scanner sc) {
+>>>>>>> Biword-index
 		int queryFoundInFilesCount = 0;
 		List <List<Integer>> DocumentList = new ArrayList<>();
 		List <Integer> positionsList = new ArrayList<>(); 
 
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
+		booleanQueryParser.setBiwordIndex(biwordIndex);
+
 		QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
 
 		if (queryComponent != null) {
@@ -179,10 +190,77 @@ public class TermDocumentIndexer {
 		long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
 
 		System.out.println(
-				"Time taken to build inverted positional inverted index: " + ((endTime - startTime) / 1000)
+				"Time taken to build positional inverted index: " + ((endTime - startTime) / 1000)
 						+ " seconds");
 
 		return positionalInvertedIndex;
+	}
+
+	private static Index biwordIndexCorpus(DocumentCorpus corpus) throws IOException {
+		long startTime = System.currentTimeMillis(); // Start time to build biword Inverted Index
+		System.out.println("Indexing...");
+
+		BiwordInvertedIndex biwordInvertedIndex = new BiwordInvertedIndex();
+		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
+
+		// Add terms to the inverted index with addPosting.
+		for (Document d : corpus.getDocuments()) {
+			Reader content = d.getContent();
+
+			// Tokenize the document's content by constructing an EnglishTokenStream around
+			// the document's content.
+			EnglishTokenStream englishTokenStream = new EnglishTokenStream(content);
+
+			// Iterate through the tokens in the document, processing them
+			// using a BasicTokenProcessor, and adding them to the
+			// biword inverted index dictionary.
+			Iterator<String> tokens = englishTokenStream.getTokens().iterator();
+			// Build biword inverted index
+			buildBiwordIndex(d, tokens, processor, biwordInvertedIndex);
+
+			content.close();
+			englishTokenStream.close();
+		}
+
+		long endTime = System.currentTimeMillis(); // End time to build biword Inverted Index
+
+		System.out.println(
+				"Time taken to build biword inverted index: " + ((endTime - startTime) / 1000)
+						+ " seconds");
+
+		return biwordInvertedIndex;
+	}
+
+	private static void buildBiwordIndex(Document d, Iterator<String> tokens, AdvancedTokenProcessor processor,
+			BiwordInvertedIndex biwordInvertedIndex) {
+		String prevTerm = null;
+		while (tokens.hasNext()) {
+			List<String> terms = processor.processToken(tokens.next());
+			int documentId = d.getId();
+			if (terms.size() == 1) {
+				if (prevTerm != null) {
+					biwordInvertedIndex.addTerm(prevTerm + " " + terms.get(0), documentId);
+				}
+				prevTerm = terms.get(0);
+				;
+			} else {
+				for (String biword : generateBiwords(terms, prevTerm)) {
+					biwordInvertedIndex.addTerm(biword, documentId);
+				}
+			}
+		}
+	}
+
+	private static List<String> generateBiwords(List<String> terms, String prevTerm) {
+		List<String> biwordResult = new ArrayList<String>();
+		for (String term : terms) {
+			if (prevTerm != null) {
+				String biword = prevTerm + " " + term;
+				biwordResult.add(biword);
+			}
+			prevTerm = term;
+		}
+		return biwordResult;
 	}
 
 	// Generic file reader

@@ -16,24 +16,34 @@ import cecs429.text.AdvancedTokenProcessor;
 public class PhraseLiteral implements QueryComponent {
 	// The list of individual terms in the phrase.
 	private List<String> mTerms = new ArrayList<>();
+	Index _biwordIndex = null;
+
 	/**
 	 * Constructs a PhraseLiteral with the given individual phrase terms.
 	 */
-	public PhraseLiteral(List<String> terms) {
+	public PhraseLiteral(List<String> terms, Index biwordIndex) {
 		mTerms.addAll(terms);
+		_biwordIndex = biwordIndex;
 	}
 
 	/**
 	 * Constructs a PhraseLiteral given a string with one or more individual terms
 	 * separated by spaces.
 	 */
-	public PhraseLiteral(String terms) {
+	public PhraseLiteral(String terms, Index biwordIndex) {
 		mTerms.addAll(Arrays.asList(terms.split(" ")));
+		_biwordIndex = biwordIndex;
 	}
 
 	@Override
 	public List<Posting> getPostings(Index index) {
 		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
+
+		if (mTerms.size() == 2) {
+			return _biwordIndex.getPostings(
+					processor.processQuery(mTerms.get(0)) + " " + processor.processQuery(mTerms.get(1)));
+		}
+
 		String processedQuery = processor.processQuery(mTerms.get(0));
 		List<Posting> result = index.getPostings(processedQuery);
 
@@ -44,7 +54,6 @@ public class PhraseLiteral implements QueryComponent {
 
 		return result;
 	}
-
 
 	private List<Posting> positionalIntersect(List<Posting> literalPostings1, List<Posting> literalPostings2) {
 		List<Posting> res = new ArrayList<>();
@@ -67,22 +76,21 @@ public class PhraseLiteral implements QueryComponent {
 				int m = 0;
 				int n = 0;
 
-				while(m != plen1 && n != plen2){
+				while (m != plen1 && n != plen2) {
 					int mPosition = postingPosition1.get(m);
 					int nPosition = postingPosition2.get(n);
 
-					if(nPosition - mPosition == 1){
+					if (nPosition - mPosition == 1) {
 						documentPositions.add(nPosition);
 						m++;
 						n++;
-					}else if(mPosition >= nPosition){
+					} else if (mPosition >= nPosition) {
 						n++;
-					}
-					else{
+					} else {
 						m++;
 					}
 				}
-				if(documentPositions.size() != 0){
+				if (documentPositions.size() != 0) {
 					res.add(new Posting(p1.getDocumentId(), documentPositions));
 				}
 

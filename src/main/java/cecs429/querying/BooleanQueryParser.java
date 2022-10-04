@@ -3,6 +3,8 @@ package cecs429.querying;
 import java.util.ArrayList;
 import java.util.List;
 
+import cecs429.indexing.Index;
+
 /**
  * Parses boolean queries according to the base requirements of the CECS 429
  * project.
@@ -16,22 +18,27 @@ public class BooleanQueryParser {
 	private static class StringBounds {
 		int start;
 		int length;
+
 		StringBounds(int start, int length) {
 			this.start = start;
 			this.length = length;
 		}
 	}
+
 	/**
 	 * Encapsulates a QueryComponent and the StringBounds that led to its parsing.
 	 */
 	private static class Literal {
 		StringBounds bounds;
 		QueryComponent literalComponent;
+
 		Literal(StringBounds bounds, QueryComponent literalComponent) {
 			this.bounds = bounds;
 			this.literalComponent = literalComponent;
 		}
 	}
+
+	private Index _biwordIndex = null;
 
 	/**
 	 * Given a boolean query, parses and returns a tree of QueryComponents
@@ -148,7 +155,7 @@ public class BooleanQueryParser {
 			++startIndex;
 		}
 
-		if(subquery.charAt(startIndex) != '\"'){
+		if (subquery.charAt(startIndex) != '\"') {
 			// Locate the next space to find the end of this literal.
 			int nextSpace = subquery.indexOf(' ', startIndex);
 
@@ -163,8 +170,7 @@ public class BooleanQueryParser {
 			return new Literal(
 					new StringBounds(startIndex, lengthOut),
 					new TermLiteral(subquery.substring(startIndex, startIndex + lengthOut)));
-		}
-		else{
+		} else {
 			// Since startIndex is at starting of the quote
 			startIndex++;
 			// Locate the next space to find the end of this literal.
@@ -180,7 +186,11 @@ public class BooleanQueryParser {
 			// This is a term literal containing a single term.
 			return new Literal(
 					new StringBounds(startIndex - 1, lengthOut + 2),
-					new PhraseLiteral(terms));
+					new PhraseLiteral(terms, _biwordIndex));
 		}
+	}
+
+	public void setBiwordIndex(Index biwordIndex) {
+		_biwordIndex = biwordIndex;
 	}
 }
