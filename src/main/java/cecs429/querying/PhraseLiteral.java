@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import cecs429.indexing.Index;
+import cecs429.indexing.KGramIndex;
 import cecs429.indexing.Posting;
 import cecs429.text.AdvancedTokenProcessor;
 
@@ -16,39 +17,66 @@ import cecs429.text.AdvancedTokenProcessor;
 public class PhraseLiteral implements QueryComponent {
 	// The list of individual terms in the phrase.
 	private List<String> mTerms = new ArrayList<>();
-	Index _biwordIndex = null;
+	private KGramIndex mKGramIndex;
+	private Index mBiwordIndex;
 
 	/**
 	 * Constructs a PhraseLiteral with the given individual phrase terms.
 	 */
-	public PhraseLiteral(List<String> terms, Index biwordIndex) {
+	public PhraseLiteral(List<String> terms, KGramIndex kGramIndex, Index biwordIndex) {
 		mTerms.addAll(terms);
-		_biwordIndex = biwordIndex;
+		mKGramIndex = kGramIndex;
+		mBiwordIndex = biwordIndex;
 	}
 
 	/**
 	 * Constructs a PhraseLiteral given a string with one or more individual terms
 	 * separated by spaces.
 	 */
-	public PhraseLiteral(String terms, Index biwordIndex) {
+	public PhraseLiteral(String terms, KGramIndex kGramIndex, Index biwordIndex) {
 		mTerms.addAll(Arrays.asList(terms.split(" ")));
-		_biwordIndex = biwordIndex;
+		mKGramIndex = kGramIndex;
+		mBiwordIndex = biwordIndex;
+	}
+
+	// Convert a string query to a QueryComponent
+	private QueryComponent termToLiteral(String term) {
+		QueryComponent queryComponent;
+		if (term.contains("*") && mKGramIndex != null) {
+			queryComponent = new WildcardLiteral(term, mKGramIndex);
+		} else {
+			queryComponent = new TermLiteral(term);
+		}
+		return queryComponent;
 	}
 
 	@Override
 	public List<Posting> getPostings(Index index) {
-		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
 
 		if (mTerms.size() == 2) {
-			return _biwordIndex.getPostings(
-					processor.processQuery(mTerms.get(0)) + " " + processor.processQuery(mTerms.get(1)));
+			String query1 = mTerms.get(0);
+			String query2 = mTerms.get(1);
+
+			// If either of the both queries contains a wildcard,
+			// don't process it as a biword query
+			if (!query1.contains("*") && !query2.contains("*")) {
+				AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
+
+				String processedQuery1 = processor.processQuery(query1);
+				String processedQuery2 = processor.processQuery(query2);
+
+				return mBiwordIndex.getPostings(processedQuery1 + " " + processedQuery2);
+			}
 		}
 
-		String processedQuery = processor.processQuery(mTerms.get(0));
-		List<Posting> result = index.getPostings(processedQuery);
+		// Convert raw query string into a term or wildcard literal
+		QueryComponent currQueryComponent = termToLiteral(mTerms.get(0));
+		List<Posting> result = currQueryComponent.getPostings(index);
 
 		for (int i = 1; i < mTerms.size(); i++) {
-			List<Posting> literalPostings = index.getPostings(processor.processQuery(mTerms.get(i)));
+			// Convert raw query string into a term or wildcard literal
+			currQueryComponent = termToLiteral(mTerms.get(i));
+			List<Posting> literalPostings = currQueryComponent.getPostings(index);
 			result = positionalIntersect(result, literalPostings);
 		}
 
