@@ -1,7 +1,9 @@
 package cecs429.querying;
+
 import java.util.List;
 
-import cecs429.indexing.*;
+import cecs429.indexing.Index;
+import cecs429.indexing.Posting;
 
 /**
  * A QueryComponent is one piece of a larger query, whether that piece is a
@@ -14,6 +16,4 @@ public interface QueryComponent {
      * source.
      */
     List<Posting> getPostings(Index index);
-    // Checks whether query component is negative i.e NOT query
-    // boolean isNegative();
 }

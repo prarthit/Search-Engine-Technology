@@ -94,24 +94,18 @@ public class TermDocumentIndexer {
 
 	private static void findQuery(QueryComponent queryComponent, Index index, DocumentCorpus corpus, Scanner sc) {
 		int queryFoundInFilesCount = 0;
-		List <List<Integer>> DocumentList = new ArrayList<>();
-		List <Integer> positionsList = new ArrayList<>(); 
 
 		if (queryComponent != null) {
 			for (Posting p : queryComponent.getPostings(index)) {
 				queryFoundInFilesCount++;
 				Document queryFoundInDocument = corpus.getDocument(p.getDocumentId());
-				positionsList.add(p.getDocumentId() + 1);
 				System.out.println(queryFoundInDocument.getTitle()
 						+ " (FileName: "
 						+ ((FileDocument) queryFoundInDocument).getFilePath().getFileName().toString()
 						+ ")");
-				p.getPositions().forEach(Position -> positionsList.add(Position + 1));
 			}
-			DocumentList.add(positionsList);
-			System.out.println(DocumentList);
 
-			System.out.println(" Query found in files: " + queryFoundInFilesCount);
+			System.out.println("Query found in files: " + queryFoundInFilesCount);
 			if (queryFoundInFilesCount > 0) {
 				// Ask the user if they would like to select a document to view
 				System.out.print("Select a document to view (y/n): ");
@@ -299,7 +293,7 @@ public class TermDocumentIndexer {
 	}
 
 	// Generic file reader
-	public static BufferedReader readFile(String filepath) throws IOException {
+	public static void readFile(String filepath) throws IOException {
 		BufferedReader in;
 		in = new BufferedReader(new FileReader(filepath));
 		String line = in.readLine();
@@ -307,6 +301,6 @@ public class TermDocumentIndexer {
 			System.out.println(line);
 			line = in.readLine();
 		}
-		return in;
+		in.close();
 	}
 }

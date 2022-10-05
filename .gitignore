@@ -26,3 +26,5 @@ all-nps-sites-extracted
 *.txt
 .vscode
 .DS_Store
+
+target/
