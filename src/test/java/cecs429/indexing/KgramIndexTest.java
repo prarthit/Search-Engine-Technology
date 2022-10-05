@@ -71,9 +71,9 @@ public class KgramIndexTest {
         List<String> intersect7 = new ArrayList<>(List.of());
         List<String> intersect8 = new ArrayList<>(List.of());
 
-        assertEquals(expected1, kgramIndex.intersectLists(intersect1, intersect2));
-        assertEquals(expected2, kgramIndex.intersectLists(intersect3, intersect4));
-        assertEquals(expected3, kgramIndex.intersectLists(intersect5, intersect6));
-        assertEquals(expected4, kgramIndex.intersectLists(intersect7, intersect8));
+        assertEquals(expected1, KGramIndex.intersectLists(intersect1, intersect2));
+        assertEquals(expected2, KGramIndex.intersectLists(intersect3, intersect4));
+        assertEquals(expected3, KGramIndex.intersectLists(intersect5, intersect6));
+        assertEquals(expected4, KGramIndex.intersectLists(intersect7, intersect8));
     }
 }

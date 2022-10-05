@@ -16,7 +16,6 @@ import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
 import cecs429.indexing.PositionalInvertedIndexTest;
 import cecs429.indexing.Posting;
-import cecs429.querying.TermLiteral;
 import cecs429.querying.WildcardLiteral;
 import edu.csulb.TermDocumentIndexer;
 
