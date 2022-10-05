@@ -197,7 +197,7 @@ public class TermDocumentIndexer {
 		return positionalInvertedIndex;
 	}
 
-	private static KGramIndex buildKGramIndex(DocumentCorpus corpus) throws IOException {
+	public static KGramIndex buildKGramIndex(DocumentCorpus corpus) throws IOException {
 		long startTime = System.currentTimeMillis(); // Start time to build k-gram index
 		System.out.println("Building k-gram index...");
 
