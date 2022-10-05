@@ -79,26 +79,27 @@ public class OrQueryTest{
         List<Posting> expected3 = new ArrayList<>();
         List<Posting> expected4 = new ArrayList<>();
         
-        expected1.add(new Posting(0, new ArrayList<>(List.of(4,31,32))));
-        expected1.add(new Posting(1, new ArrayList<>(List.of(18))));
-        expected1.add(new Posting(2, new ArrayList<>(List.of(2, 11, 12))));
-        expected1.add(new Posting(3));
+        expected1.add(new Posting(0, new ArrayList<>(List.of(3,12,14,18,27,30,44,45,47,49))));
+        expected1.add(new Posting(1, new ArrayList<>(List.of(1,3,6))));
+        expected1.add(new Posting(2, new ArrayList<>(List.of(6,7,8,15))));
+        expected1.add(new Posting(3, new ArrayList<>(List.of(1,4,7,16,18))));
+        expected1.add(new Posting(4, new ArrayList<>(List.of(8))));
 
-        expected2.add(new Posting(1));
-        expected2.add(new Posting(2));
-        expected2.add(new Posting(3));
-        expected2.add(new Posting(4));
+        expected2.add(new Posting(1, new ArrayList<>(List.of(19,20))));
+        expected2.add(new Posting(2, new ArrayList<>(List.of(13,14))));
+        expected2.add(new Posting(3, new ArrayList<>(List.of(12,13))));
+        expected2.add(new Posting(4, new ArrayList<>(List.of(6,7,9,11,18,19,20,21))));
 
-        expected3.add(new Posting(0));
-        expected3.add(new Posting(1));
-        expected3.add(new Posting(2));
-        expected3.add(new Posting(3));
-        expected3.add(new Posting(4));
+        expected3.add(new Posting(0, new ArrayList<>(List.of(11,14,26,43,47,49))));
+        expected3.add(new Posting(1, new ArrayList<>(List.of(9,12))));
+        expected3.add(new Posting(2, new ArrayList<>(List.of(7,15))));
+        expected3.add(new Posting(3, new ArrayList<>(List.of(7))));
+        expected3.add(new Posting(4, new ArrayList<>(List.of(5,8,13,15))));
         
-        expected4.add(new Posting(0));
-        expected4.add(new Posting(1));
-        expected4.add(new Posting(2));
-        expected4.add(new Posting(4));
+        expected4.add(new Posting(0, new ArrayList<>(List.of(4,31,32))));
+        expected4.add(new Posting(1, new ArrayList<>(List.of(18))));
+        expected4.add(new Posting(2, new ArrayList<>(List.of(2,11,12,16))));
+        expected4.add(new Posting(4, new ArrayList<>(List.of(1,2,16))));
 
         assertEquals(true, pr.checkPostings(expected1, or1.getPostings(index)));
         assertEquals(true, pr.checkPostings(expected2, or2.getPostings(index)));

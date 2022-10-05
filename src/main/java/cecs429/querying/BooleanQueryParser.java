@@ -43,8 +43,6 @@ public class BooleanQueryParser {
 		}
 	}
 
-	private Index _biwordIndex = null;
-
 	/**
 	 * Given a boolean query, parses and returns a tree of QueryComponents
 	 * representing the query.

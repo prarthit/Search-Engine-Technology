@@ -46,14 +46,10 @@ public class BooleanQueryParserTest{
         List<Posting> expected4 = new ArrayList<>();
         List<Posting> expected5 = new ArrayList<>();
 
-        for(Posting p : qr1.getPostings(index)){
-            System.out.println(p.getDocumentId());
-            System.out.println(p.getPositions());
-        }
-
-        expected1.add(new Posting(0, new ArrayList<>(List.of(11,26,43))));
-        expected1.add(new Posting(1, new ArrayList<>(List.of(9,12))));
+        expected1.add(new Posting(0, new ArrayList<>(List.of(5,11,21,26,34,43))));
+        expected1.add(new Posting(1, new ArrayList<>(List.of(4,9,12))));
         expected1.add(new Posting(3, new ArrayList<>()));
+        expected1.add(new Posting(4, new ArrayList<>(List.of(5,12,13,15))));
 
         expected2.add(new Posting(0));
         expected2.add(new Posting(1));
@@ -61,9 +57,10 @@ public class BooleanQueryParserTest{
         expected2.add(new Posting(3));
         expected2.add(new Posting(4));
 
-        expected3.add(new Posting(1));
-        expected3.add(new Posting(2));
-        expected3.add(new Posting(3));
+        expected3.add(new Posting(1, new ArrayList<>(List.of(19))));
+        expected3.add(new Posting(2, new ArrayList<>(List.of(14))));
+        expected3.add(new Posting(3, new ArrayList<>(List.of(12))));
+        expected3.add(new Posting(4, new ArrayList<>(List.of(18,19,20,21))));
 
         expected4.add(new Posting(0));
         expected4.add(new Posting(4));
