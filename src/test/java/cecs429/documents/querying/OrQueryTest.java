@@ -69,14 +69,19 @@ public class OrQueryTest{
 
         OrQuery or4 = new OrQuery(component4);
 
+        for(Posting p : or4.getPostings(index)){
+            System.out.println(p.getDocumentId());
+            System.out.println(p.getPositions());
+        }
+
         List<Posting> expected1 = new ArrayList<>();
         List<Posting> expected2 = new ArrayList<>();
         List<Posting> expected3 = new ArrayList<>();
         List<Posting> expected4 = new ArrayList<>();
         
-        expected1.add(new Posting(0));
-        expected1.add(new Posting(1));
-        expected1.add(new Posting(2));
+        expected1.add(new Posting(0, new ArrayList<>(List.of(4,31,32))));
+        expected1.add(new Posting(1, new ArrayList<>(List.of(18))));
+        expected1.add(new Posting(2, new ArrayList<>(List.of(2, 11, 12))));
         expected1.add(new Posting(3));
 
         expected2.add(new Posting(1));

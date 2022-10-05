@@ -46,9 +46,14 @@ public class BooleanQueryParserTest{
         List<Posting> expected4 = new ArrayList<>();
         List<Posting> expected5 = new ArrayList<>();
 
-        expected1.add(new Posting(0));
-        expected1.add(new Posting(1));
-        expected1.add(new Posting(3));
+        for(Posting p : qr1.getPostings(index)){
+            System.out.println(p.getDocumentId());
+            System.out.println(p.getPositions());
+        }
+
+        expected1.add(new Posting(0, new ArrayList<>(List.of(11,26,43))));
+        expected1.add(new Posting(1, new ArrayList<>(List.of(9,12))));
+        expected1.add(new Posting(3, new ArrayList<>()));
 
         expected2.add(new Posting(0));
         expected2.add(new Posting(1));

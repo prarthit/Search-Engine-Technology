@@ -31,12 +31,12 @@ public class PhraseLiteralTest{
     @Test
     void validategetPostings(){
         PositionalInvertedIndexTest pt = new PositionalInvertedIndexTest();
-        PhraseLiteral pl1 = new PhraseLiteral("scan chart scan", null);
-        PhraseLiteral pl2 = new PhraseLiteral("lane way realism", null);
-        PhraseLiteral pl3 = new PhraseLiteral("strike strike scan", null);
-        PhraseLiteral pl4 = new PhraseLiteral("playing playing playing playing", null);
-        PhraseLiteral pl5 = new PhraseLiteral("eating", null);
-        PhraseLiteral pl6 = new PhraseLiteral("....eating--++=", null);
+        PhraseLiteral pl1 = new PhraseLiteral("scan chart scan", null, null);
+        PhraseLiteral pl2 = new PhraseLiteral("lane way realism", null, null);
+        PhraseLiteral pl3 = new PhraseLiteral("strike strike scan", null, null);
+        PhraseLiteral pl4 = new PhraseLiteral("playing playing playing playing", null, null);
+        PhraseLiteral pl5 = new PhraseLiteral("eating", null, null);
+        PhraseLiteral pl6 = new PhraseLiteral("....eating--++=", null, null);
         
         List<Posting> expected1 = new ArrayList<>();
         List<Posting> expected2 = new ArrayList<>();
