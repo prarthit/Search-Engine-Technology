@@ -17,23 +17,29 @@ import cecs429.indexing.PositionalInvertedIndexTest;
 import cecs429.indexing.Posting;
 import cecs429.querying.BooleanQueryParser;
 import cecs429.querying.QueryComponent;
+import cecs429.text.AdvancedTokenProcessor;
+import cecs429.text.TokenProcessor;
 import edu.csulb.TermDocumentIndexer;
 
-public class BooleanQueryParserTest{
-    private static String newDirectoryPath = "src/test/java/test_docs", fileExtension = ".json"; // Directory name where the corpus resides
+public class BooleanQueryParserTest {
+    private static String newDirectoryPath = "src/test/java/test_docs", fileExtension = ".json"; // Directory name where
+                                                                                                 // the corpus resides
     private Index index = null;
     private DocumentCorpus corpus = null;
-	
-	public BooleanQueryParserTest()throws IOException{
-        corpus = DirectoryCorpus.loadJsonDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()), fileExtension);
-        index = TermDocumentIndexer.indexCorpus(corpus);
-	}
+    private TokenProcessor tokenProcessor = new AdvancedTokenProcessor();
+
+    public BooleanQueryParserTest() throws IOException {
+        corpus = DirectoryCorpus.loadJsonDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()),
+                fileExtension);
+        index = TermDocumentIndexer.indexCorpus(corpus, tokenProcessor);
+    }
 
     @Test
-    public void validateBooleanQueryParser(){
+    public void validateBooleanQueryParser() {
         BooleanQueryParser bqp = new BooleanQueryParser();
+        bqp.setTokenProcessor(tokenProcessor);
         PositionalInvertedIndexTest pt = new PositionalInvertedIndexTest();
-        
+
         QueryComponent qr1 = bqp.parseQuery("punish operation + lemon + scan");
         QueryComponent qr2 = bqp.parseQuery("agile agile + playing playing");
         QueryComponent qr3 = bqp.parseQuery("realism eating + playing");
@@ -46,10 +52,10 @@ public class BooleanQueryParserTest{
         List<Posting> expected4 = new ArrayList<>();
         List<Posting> expected5 = new ArrayList<>();
 
-        expected1.add(new Posting(0, new ArrayList<>(List.of(5,11,21,26,34,43))));
-        expected1.add(new Posting(1, new ArrayList<>(List.of(4,9,12))));
+        expected1.add(new Posting(0, new ArrayList<>(List.of(5, 11, 21, 26, 34, 43))));
+        expected1.add(new Posting(1, new ArrayList<>(List.of(4, 9, 12))));
         expected1.add(new Posting(3, new ArrayList<>()));
-        expected1.add(new Posting(4, new ArrayList<>(List.of(5,12,13,15))));
+        expected1.add(new Posting(4, new ArrayList<>(List.of(5, 12, 13, 15))));
 
         expected2.add(new Posting(0));
         expected2.add(new Posting(1));
@@ -60,13 +66,13 @@ public class BooleanQueryParserTest{
         expected3.add(new Posting(1, new ArrayList<>(List.of(19))));
         expected3.add(new Posting(2, new ArrayList<>(List.of(14))));
         expected3.add(new Posting(3, new ArrayList<>(List.of(12))));
-        expected3.add(new Posting(4, new ArrayList<>(List.of(18,19,20,21))));
+        expected3.add(new Posting(4, new ArrayList<>(List.of(18, 19, 20, 21))));
 
         expected4.add(new Posting(0));
         expected4.add(new Posting(4));
 
         expected5.add(new Posting(4));
-        
+
         assertEquals(true, pt.checkPostings(expected1, qr1.getPostings(index)));
         assertEquals(true, pt.checkPostings(expected2, qr2.getPostings(index)));
         assertEquals(true, pt.checkPostings(expected3, qr3.getPostings(index)));

@@ -6,6 +6,7 @@ import java.util.List;
 
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
+import cecs429.text.TokenProcessor;
 
 /**
  * Parses boolean queries according to the base requirements of the CECS 429
@@ -16,6 +17,7 @@ import cecs429.indexing.KGramIndex;
 public class BooleanQueryParser {
 	private KGramIndex kGramIndex; // k-gram index for wildcard literals
 	private Index biwordIndex;
+	private TokenProcessor tokenProcessor;
 
 	/**
 	 * Identifies a portion of a string with a starting index and a length.
@@ -183,7 +185,7 @@ public class BooleanQueryParser {
 			// This is a near literal containing a list of terms.
 			return new Literal(
 					new StringBounds(startIndex - 1, lengthOut + 2),
-					new NearLiteral(terms, kGramIndex));
+					new NearLiteral(terms, tokenProcessor, kGramIndex));
 		} else if (subquery.charAt(startIndex) != '\"') {
 			// Locate the next space to find the end of this literal.
 			int nextSpace = subquery.indexOf(' ', startIndex);
@@ -198,9 +200,9 @@ public class BooleanQueryParser {
 			String nextTerm = subquery.substring(startIndex, startIndex + lengthOut);
 			QueryComponent queryComponent;
 			if (nextTerm.contains("*") && kGramIndex != null)
-				queryComponent = new WildcardLiteral(nextTerm, kGramIndex);
+				queryComponent = new WildcardLiteral(nextTerm, tokenProcessor, kGramIndex);
 			else
-				queryComponent = new TermLiteral(nextTerm);
+				queryComponent = new TermLiteral(nextTerm, tokenProcessor);
 
 			// This is a term literal containing a single term.
 			return new Literal(
@@ -222,7 +224,7 @@ public class BooleanQueryParser {
 			// This is a term literal containing a single term.
 			return new Literal(
 					new StringBounds(startIndex - 1, lengthOut + 2),
-					new PhraseLiteral(terms, kGramIndex, biwordIndex));
+					new PhraseLiteral(terms, tokenProcessor, kGramIndex, biwordIndex));
 		}
 	}
 
@@ -232,5 +234,9 @@ public class BooleanQueryParser {
 
 	public void setBiwordIndex(Index biwordIndex) {
 		this.biwordIndex = biwordIndex;
+	}
+
+	public void setTokenProcessor(TokenProcessor tokenProcessor) {
+		this.tokenProcessor = tokenProcessor;
 	}
 }

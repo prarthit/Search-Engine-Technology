@@ -8,7 +8,12 @@ import java.util.List;
  */
 public interface TokenProcessor {
 	/**
-	 * Normalizes a token into a term.
+	 * Normalizes a token into a list of terms.
 	 */
 	List<String> processToken(String token);
+
+	/**
+	 * Normalizes a search query.
+	 */
+	String processQuery(String token);
 }

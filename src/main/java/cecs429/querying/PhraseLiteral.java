@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
 import cecs429.indexing.Posting;
-import cecs429.text.AdvancedTokenProcessor;
+import cecs429.text.TokenProcessor;
 
 /**
  * Represents a phrase literal consisting of one or more terms that must occur
@@ -19,40 +19,32 @@ public class PhraseLiteral implements QueryComponent {
 	private List<String> mTerms = new ArrayList<>();
 	private KGramIndex mKGramIndex;
 	private Index mBiwordIndex;
-
-	/**
-	 * Constructs a PhraseLiteral with the given individual phrase terms.
-	 */
-	public PhraseLiteral(List<String> terms, KGramIndex kGramIndex, Index biwordIndex) {
-		mTerms.addAll(terms);
-		mKGramIndex = kGramIndex;
-		mBiwordIndex = biwordIndex;
-	}
+	private TokenProcessor mTokenProcessor;
 
 	/**
 	 * Constructs a PhraseLiteral given a string with one or more individual terms
 	 * separated by spaces.
 	 */
-	public PhraseLiteral(String terms, KGramIndex kGramIndex, Index biwordIndex) {
+	public PhraseLiteral(String terms, TokenProcessor tokenProcessor, KGramIndex kGramIndex, Index biwordIndex) {
 		mTerms.addAll(Arrays.asList(terms.split(" ")));
 		mKGramIndex = kGramIndex;
 		mBiwordIndex = biwordIndex;
+		mTokenProcessor = tokenProcessor;
 	}
 
 	// Convert a string query to a QueryComponent
 	private QueryComponent termToLiteral(String term) {
 		QueryComponent queryComponent;
 		if (term.contains("*") && mKGramIndex != null) {
-			queryComponent = new WildcardLiteral(term, mKGramIndex);
+			queryComponent = new WildcardLiteral(term, mTokenProcessor, mKGramIndex);
 		} else {
-			queryComponent = new TermLiteral(term);
+			queryComponent = new TermLiteral(term, mTokenProcessor);
 		}
 		return queryComponent;
 	}
 
 	@Override
 	public List<Posting> getPostings(Index index) {
-
 		if (mTerms.size() == 2 && mBiwordIndex != null) {
 			String query1 = mTerms.get(0);
 			String query2 = mTerms.get(1);
@@ -60,10 +52,8 @@ public class PhraseLiteral implements QueryComponent {
 			// If either of the both queries contains a wildcard,
 			// don't process it as a biword query
 			if (!query1.contains("*") && !query2.contains("*")) {
-				AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
-
-				String processedQuery1 = processor.processQuery(query1);
-				String processedQuery2 = processor.processQuery(query2);
+				String processedQuery1 = mTokenProcessor.processQuery(query1);
+				String processedQuery2 = mTokenProcessor.processQuery(query2);
 
 				return mBiwordIndex.getPostings(processedQuery1 + " " + processedQuery2);
 			}

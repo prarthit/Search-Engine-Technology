@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
 import cecs429.indexing.Posting;
+import cecs429.text.TokenProcessor;
 
 /**
  * Represents a phrase literal consisting of one or more terms that must occur
@@ -17,22 +18,24 @@ public class NearLiteral implements QueryComponent {
 	private List<String> mTerms = new ArrayList<>();
 	private Integer kNear = 1;
 	private KGramIndex mKGramIndex;
+	private TokenProcessor mTokenProcessor;
 
 	/**
 	 * Constructs a NearLiteral with the given list of terms.
 	 */
-	public NearLiteral(List<String> terms, KGramIndex kGramIndex) {
+	public NearLiteral(List<String> terms, TokenProcessor tokenProcessor, KGramIndex kGramIndex) {
 		mTerms.addAll(terms);
 		mKGramIndex = kGramIndex;
+		mTokenProcessor = tokenProcessor;
 	}
 
 	// Convert a string query to a QueryComponent
 	private QueryComponent termToLiteral(String term) {
 		QueryComponent queryComponent;
 		if (term.contains("*") && mKGramIndex != null) {
-			queryComponent = new WildcardLiteral(term, mKGramIndex);
+			queryComponent = new WildcardLiteral(term, mTokenProcessor, mKGramIndex);
 		} else {
-			queryComponent = new TermLiteral(term);
+			queryComponent = new TermLiteral(term, mTokenProcessor);
 		}
 		return queryComponent;
 	}

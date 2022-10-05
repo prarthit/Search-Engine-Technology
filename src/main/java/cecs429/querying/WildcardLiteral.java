@@ -7,7 +7,7 @@ import java.util.function.Predicate;
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
 import cecs429.indexing.Posting;
-import cecs429.text.AdvancedTokenProcessor;
+import cecs429.text.TokenProcessor;
 
 /**
  * A wildcard literal
@@ -15,16 +15,18 @@ import cecs429.text.AdvancedTokenProcessor;
 public class WildcardLiteral implements QueryComponent {
     private String mTerm;
     private KGramIndex mKGramIndex;
+    private TokenProcessor mTokenProcessor;
 
-    public WildcardLiteral(String term, KGramIndex kGramIndex) {
+    public WildcardLiteral(String term, TokenProcessor tokenProcessor, KGramIndex kGramIndex) {
         mTerm = term;
         mKGramIndex = kGramIndex;
+        mTokenProcessor = tokenProcessor;
     }
 
     @Override
     public List<Posting> getPostings(Index index) {
-        AdvancedTokenProcessor tokenProcessor = new AdvancedTokenProcessor();
-        mTerm = tokenProcessor.processWildcardQuery(mTerm);
+        // Process the wildcard query by transforming it to lowercase
+        mTerm = mTerm.toLowerCase();
 
         List<String> termsMatchingWildcard = findWordsMatchingWildcard();
         System.out.println("Terms matching the wildcard: " + termsMatchingWildcard);
@@ -32,7 +34,7 @@ public class WildcardLiteral implements QueryComponent {
         // For the final list of words, find the postings and merge them
         List<QueryComponent> termLiterals = new ArrayList<>();
         termsMatchingWildcard.forEach(term -> {
-            termLiterals.add(new TermLiteral(term));
+            termLiterals.add(new TermLiteral(term, mTokenProcessor));
         });
         QueryComponent orQueryComponent = new OrQuery(termLiterals);
 

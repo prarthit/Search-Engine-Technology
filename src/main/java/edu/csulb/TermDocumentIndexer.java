@@ -26,6 +26,7 @@ import cecs429.indexing.Posting;
 import cecs429.querying.BooleanQueryParser;
 import cecs429.querying.QueryComponent;
 import cecs429.text.AdvancedTokenProcessor;
+import cecs429.text.BasicTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 import cecs429.text.TokenProcessor;
 
@@ -42,8 +43,8 @@ public class TermDocumentIndexer {
 
 		DocumentCorpus corpus = null;
 		Index index = null;
+		TokenProcessor processor = null;
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
-		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
 
 		// Loop for taking search input query
 		while (true) {
@@ -51,20 +52,24 @@ public class TermDocumentIndexer {
 			if (!prevDirectoryPath.equals(newDirectoryPath)) {
 				prevDirectoryPath = newDirectoryPath;
 
+				// Create basic or advanced token processor based on user input
+				processor = inputTokenProcessor(sc);
+				booleanQueryParser.setTokenProcessor(processor);
+
 				String fileExtension = ".json";
 				// Create a DocumentCorpus to load .json documents from the user input
 				// directory.
 				corpus = DirectoryCorpus
 						.loadJsonDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()), fileExtension);
 				// Index the documents of the directory.
-				index = indexCorpus(corpus);
+				index = indexCorpus(corpus, processor);
 
 				// Build a k-gram index from the corpus
 				KGramIndex kGramIndex = buildKGramIndex(corpus);
 				booleanQueryParser.setKGramIndex(kGramIndex);
 
 				// Build a biword index from the corpus
-				Index biwordIndex = buildBiwordIndex(corpus);
+				Index biwordIndex = buildBiwordIndex(corpus, processor);
 				booleanQueryParser.setBiwordIndex(biwordIndex);
 			}
 
@@ -83,6 +88,16 @@ public class TermDocumentIndexer {
 		}
 
 		return;
+	}
+
+	private static TokenProcessor inputTokenProcessor(Scanner sc) {
+		System.out.print("Enter token processor (Basic=0, Advanced=1): ");
+		String input = sc.nextLine().trim();
+		if (input.equals("0")) {
+			return new BasicTokenProcessor();
+		} else {
+			return new AdvancedTokenProcessor();
+		}
 	}
 
 	public static boolean isValidDirectory(String directoryPath) {
@@ -123,7 +138,7 @@ public class TermDocumentIndexer {
 		}
 	}
 
-	public static boolean processSpecialQueries(String query, AdvancedTokenProcessor processor, Index index) {
+	public static boolean processSpecialQueries(String query, TokenProcessor processor, Index index) {
 		if (query.equals(":q")) {
 		} else if (query.startsWith(":stem ")) {
 			query = query.replaceAll(":stem ", "").trim();
@@ -150,11 +165,10 @@ public class TermDocumentIndexer {
 		return true;
 	}
 
-	public static Index indexCorpus(DocumentCorpus corpus) throws IOException {
+	public static Index indexCorpus(DocumentCorpus corpus, TokenProcessor processor) throws IOException {
 		long startTime = System.currentTimeMillis(); // Start time to build positional Inverted Index
 		System.out.println("Indexing...");
 		PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
-		TokenProcessor processor = new AdvancedTokenProcessor();
 
 		// Add terms to the inverted index with addPosting.
 		for (Document d : corpus.getDocuments()) {
@@ -191,7 +205,8 @@ public class TermDocumentIndexer {
 		return positionalInvertedIndex;
 	}
 
-	public static KGramIndex buildKGramIndex(DocumentCorpus corpus) throws IOException {
+	public static KGramIndex buildKGramIndex(DocumentCorpus corpus)
+			throws IOException {
 		long startTime = System.currentTimeMillis(); // Start time to build k-gram index
 		System.out.println("Building k-gram index...");
 
@@ -235,13 +250,11 @@ public class TermDocumentIndexer {
 		return kGramIndex;
 	}
 
-	private static Index buildBiwordIndex(DocumentCorpus corpus) throws IOException {
+	private static Index buildBiwordIndex(DocumentCorpus corpus, TokenProcessor processor) throws IOException {
 		long startTime = System.currentTimeMillis(); // Start time to build biword Inverted Index
 		System.out.println("Building biword index...");
 
 		BiwordInvertedIndex biwordInvertedIndex = new BiwordInvertedIndex();
-
-		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
 
 		// Add terms to the inverted index with addPosting.
 		for (Document d : corpus.getDocuments()) {

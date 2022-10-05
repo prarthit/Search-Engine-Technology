@@ -22,12 +22,12 @@ public class TermDocumentIndexerTest {
                                                                                                  // the corpus resides
     private Index index = null;
     private DocumentCorpus corpus = null;
-    private AdvancedTokenProcessor processor = null;
+    private AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
 
     public TermDocumentIndexerTest() throws IOException {
         corpus = DirectoryCorpus.loadJsonDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()),
                 fileExtension);
-        index = TermDocumentIndexer.indexCorpus(corpus);
+        index = TermDocumentIndexer.indexCorpus(corpus, processor);
         processor = new AdvancedTokenProcessor();
     }
 
@@ -82,6 +82,6 @@ public class TermDocumentIndexerTest {
     // Positional Inverted index build test
     @Test
     void validatePositionalInvertedIndex() throws IOException {
-        assertNotNull(TermDocumentIndexer.indexCorpus(corpus));
+        assertNotNull(TermDocumentIndexer.indexCorpus(corpus, processor));
     }
 }
