@@ -85,7 +85,7 @@ public class TermDocumentIndexer {
 		return;
 	}
 
-	private static boolean isValidDirectory(String directoryPath) {
+	public static boolean isValidDirectory(String directoryPath) {
 		boolean isValidDirectory = Files.isDirectory(Paths.get(directoryPath));
 		if (!isValidDirectory)
 			System.out.println("Invalid directory path");
@@ -123,11 +123,10 @@ public class TermDocumentIndexer {
 		}
 	}
 
-	private static boolean processSpecialQueries(String query, AdvancedTokenProcessor processor, Index index) {
+	public static boolean processSpecialQueries(String query, AdvancedTokenProcessor processor, Index index) {
 		if (query.equals(":q")) {
 		} else if (query.startsWith(":stem ")) {
 			query = query.replaceAll(":stem ", "").trim();
-
 			List<String> stemmedTerms = processor.processToken(query);
 			stemmedTerms.forEach(stemmedTerm -> System.out.println(stemmedTerm));
 		} else if (query.startsWith(":index ")) {
@@ -151,10 +150,9 @@ public class TermDocumentIndexer {
 		return true;
 	}
 
-	private static Index indexCorpus(DocumentCorpus corpus) throws IOException {
+	public static Index indexCorpus(DocumentCorpus corpus) throws IOException {
 		long startTime = System.currentTimeMillis(); // Start time to build positional Inverted Index
 		System.out.println("Indexing...");
-
 		PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
 		TokenProcessor processor = new AdvancedTokenProcessor();
 
@@ -193,7 +191,7 @@ public class TermDocumentIndexer {
 		return positionalInvertedIndex;
 	}
 
-	private static KGramIndex buildKGramIndex(DocumentCorpus corpus) throws IOException {
+	public static KGramIndex buildKGramIndex(DocumentCorpus corpus) throws IOException {
 		long startTime = System.currentTimeMillis(); // Start time to build k-gram index
 		System.out.println("Building k-gram index...");
 
