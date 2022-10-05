@@ -56,11 +56,10 @@ public class TermDocumentIndexer {
 				processor = inputTokenProcessor(sc);
 				booleanQueryParser.setTokenProcessor(processor);
 
-				String fileExtension = ".json";
-				// Create a DocumentCorpus to load .json documents from the user input
-				// directory.
+				// Create a DocumentCorpus to load either .txt or .json documents from the user
+				// input directory.
 				corpus = DirectoryCorpus
-						.loadJsonDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()), fileExtension);
+						.loadDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()));
 				// Index the documents of the directory.
 				index = indexCorpus(corpus, processor);
 
