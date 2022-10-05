@@ -18,6 +18,7 @@ import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.documents.FileDocument;
+import cecs429.indexing.BiwordInvertedIndex;
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
 import cecs429.indexing.PositionalInvertedIndex;
@@ -61,6 +62,10 @@ public class TermDocumentIndexer {
 				// Build a k-gram index from the corpus
 				KGramIndex kGramIndex = buildKGramIndex(corpus);
 				booleanQueryParser.setKGramIndex(kGramIndex);
+
+				// Build a biword index from the corpus
+				Index biwordIndex = buildBiwordIndex(corpus);
+				booleanQueryParser.setBiwordIndex(biwordIndex);
 			}
 
 			System.out.print("\nEnter a search query: ");
@@ -234,6 +239,63 @@ public class TermDocumentIndexer {
 						+ " seconds");
 
 		return kGramIndex;
+	}
+
+	private static Index buildBiwordIndex(DocumentCorpus corpus) throws IOException {
+		long startTime = System.currentTimeMillis(); // Start time to build biword Inverted Index
+		System.out.println("Building biword index...");
+
+		BiwordInvertedIndex biwordInvertedIndex = new BiwordInvertedIndex();
+
+		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
+
+		// Add terms to the inverted index with addPosting.
+		for (Document d : corpus.getDocuments()) {
+			Reader content = d.getContent();
+
+			// Tokenize the document's content by constructing an EnglishTokenStream around
+			// the document's content.
+			EnglishTokenStream englishTokenStream = new EnglishTokenStream(content);
+
+			// Iterate through the tokens in the document, processing them
+			// using a BasicTokenProcessor, and adding them to the
+			// biword inverted index dictionary.
+			Iterator<String> tokens = englishTokenStream.getTokens().iterator();
+			List<String> twoConsecutiveTerms = new ArrayList<>();
+			while (tokens.hasNext()) {
+				List<String> terms = processor.processToken(tokens.next());
+				twoConsecutiveTerms.addAll(terms);
+
+				// If there are more than 1 terms in the twoConsectiveTerms list
+				// generate all biwords and add them to the biword index
+				if (twoConsecutiveTerms.size() > 1) {
+					int documentId = d.getId();
+
+					for (String biword : BiwordInvertedIndex.generateBiwords(twoConsecutiveTerms)) {
+						biwordInvertedIndex.addTerm(biword, documentId);
+					}
+
+					// If all the biwords have been created, only retain the
+					// last term in the twoConsecutiveTerms list in order to pair
+					// it with the upcoming next term.
+					int len = twoConsecutiveTerms.size();
+					String temp = twoConsecutiveTerms.get(len - 1);
+					twoConsecutiveTerms.clear();
+					twoConsecutiveTerms.add(temp);
+				}
+			}
+
+			content.close();
+			englishTokenStream.close();
+		}
+
+		long endTime = System.currentTimeMillis(); // End time to build biword Inverted Index
+
+		System.out.println(
+				"Time taken to build biword inverted index: " + ((endTime - startTime) / 1000)
+						+ " seconds");
+
+		return biwordInvertedIndex;
 	}
 
 	// Generic file reader

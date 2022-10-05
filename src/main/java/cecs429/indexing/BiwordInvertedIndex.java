@@ -47,4 +47,19 @@ public class BiwordInvertedIndex implements Index {
 
 		return vocabulary;
 	}
+
+	// Generate all biwords from a list of words
+	public static List<String> generateBiwords(List<String> words) {
+		List<String> biwords = new ArrayList<String>();
+
+		for (int i = 0; i < words.size() - 1; i++) {
+			String word1 = words.get(i);
+			String word2 = words.get(i + 1);
+
+			String biword = word1 + " " + word2;
+			biwords.add(biword);
+		}
+
+		return biwords;
+	}
 }

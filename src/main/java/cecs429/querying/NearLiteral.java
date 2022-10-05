@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import cecs429.indexing.Index;
+import cecs429.indexing.KGramIndex;
 import cecs429.indexing.Posting;
-import cecs429.text.AdvancedTokenProcessor;
 
 /**
  * Represents a phrase literal consisting of one or more terms that must occur
@@ -16,12 +16,25 @@ public class NearLiteral implements QueryComponent {
 	// The list of individual terms in the phrase.
 	private List<String> mTerms = new ArrayList<>();
 	private Integer kNear = 1;
+	private KGramIndex mKGramIndex;
 
 	/**
 	 * Constructs a NearLiteral with the given list of terms.
 	 */
-	public NearLiteral(List<String> terms) {
+	public NearLiteral(List<String> terms, KGramIndex kGramIndex) {
 		mTerms.addAll(terms);
+		mKGramIndex = kGramIndex;
+	}
+
+	// Convert a string query to a QueryComponent
+	private QueryComponent termToLiteral(String term) {
+		QueryComponent queryComponent;
+		if (term.contains("*") && mKGramIndex != null) {
+			queryComponent = new WildcardLiteral(term, mKGramIndex);
+		} else {
+			queryComponent = new TermLiteral(term);
+		}
+		return queryComponent;
 	}
 
 	@Override
@@ -30,13 +43,13 @@ public class NearLiteral implements QueryComponent {
 		if (mTerms.size() < 3) {
 			return new ArrayList<>();
 		}
-		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
-		String processedQuery = processor.processQuery(mTerms.get(0));
-		List<Posting> result = index.getPostings(processedQuery);
+
+		QueryComponent firstLiteral = termToLiteral(mTerms.get(0));
+		List<Posting> result = firstLiteral.getPostings(index);
 
 		for (int i = 2; i < mTerms.size(); i += 2) {
 			kNear = Integer.parseInt(mTerms.get(i - 1));
-			List<Posting> literalPostings = index.getPostings(processor.processQuery(mTerms.get(i)));
+			List<Posting> literalPostings = termToLiteral(mTerms.get(i)).getPostings(index);
 			result = positionalIntersect(result, literalPostings, kNear);
 		}
 
@@ -62,25 +75,22 @@ public class NearLiteral implements QueryComponent {
 				int plen1 = postingPosition1.size();
 				int plen2 = postingPosition2.size();
 
-				int k = kNear;
-				while (k > 0) {
-					int m = 0;
-					int n = 0;
-					while (m != plen1 && n != plen2) {
-						int mPosition = postingPosition1.get(m);
+				int m = 0;
+				int n = 0;
+				while (m != plen1) {
+					int mPosition = postingPosition1.get(m);
+					while (n != plen2) {
 						int nPosition = postingPosition2.get(n);
-
-						if (nPosition - mPosition == k) {
+						if (nPosition - mPosition > 0 && nPosition - mPosition <= kNear) {
 							documentPositions.add(nPosition);
-							m++;
 							n++;
-						} else if (mPosition >= nPosition) {
+						} else if (nPosition <= mPosition) {
 							n++;
 						} else {
-							m++;
+							break;
 						}
 					}
-					k--;
+					m++;
 				}
 				if (documentPositions.size() != 0) {
 					res.add(new Posting(p1.getDocumentId(), documentPositions));
