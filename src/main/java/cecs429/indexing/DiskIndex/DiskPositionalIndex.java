@@ -1,4 +1,4 @@
-package cecs429.indexing.DiskIndex;
+package cecs429.indexing.diskIndex;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,8 +12,9 @@ import java.util.stream.Collectors;
 
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
-import cecs429.indexing.Database.TermPositionCrud;
-import cecs429.indexing.Database.TermPositionModel;
+import cecs429.indexing.database.TermPositionCrud;
+import cecs429.indexing.database.TermPositionModel;
+import cecs429.utils.Utils;
 
 /**
  * A DiskPositionalIndex can retrieve postings for a term from a data structure
@@ -22,38 +23,34 @@ import cecs429.indexing.Database.TermPositionModel;
  */
 public class DiskPositionalIndex implements Index {
     // Need to place in the interface 'index' later - verify
-    private RandomAccessFile vocab;
     private RandomAccessFile postings;
     private TermPositionCrud termPositionCrud;
+
     /**
      * Create a disk positional inverted index.
      * 
-     * @param path path of where disk indexes can be found
+     * @param diskDirectoryPath diskDirectoryPath of where disk indexes can be found
      * @throws SQLException
      */
-    public DiskPositionalIndex(String path) throws SQLException {
-        // super();
+    public DiskPositionalIndex(String diskDirectoryPath) throws SQLException {
         try {
-            // DiskIndexBuilder diskIndexBuilder = new DiskIndexBuilder(BIWORD_INDEX);
-            vocab = new RandomAccessFile(new File(path, DiskIndexEnum.POSITIONAL_INDEX.getVocabFileName()), "r");
-            postings = new RandomAccessFile(new File(path, DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName()), "r");
-            // mDocWeights = new RandomAccessFile(new File(path, "docWeights.bin"), "r");
-            // mVocabTable = readVocabTable(path);
-            termPositionCrud = new TermPositionCrud();
+            postings = new RandomAccessFile(
+                    new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName()), "r");
+                    
+            termPositionCrud = new TermPositionCrud(Utils.getChildDirectoryName(diskDirectoryPath));
         } catch (FileNotFoundException ex) {
-            // System.out.println(ex.toString());
-            ex.getStackTrace();
+            ex.printStackTrace();
         }
     }
 
     /**
-     * Retrieves a list of Postings of documents that contain the given term.
+     * Retrieves a list of Postings of documents that contain the given term with
+     * positions
      */
     @Override
     public List<Posting> getPostings(String term) {
         try {
-            // initialize the array that will hold the postings.
-            List<Posting> docList = new ArrayList<Posting>();
+            List<Posting> docIds = new ArrayList<Posting>();
 
             TermPositionModel termPositionModel = termPositionCrud.getTermPositionModel(term);
             long bytePosition = termPositionModel.getBytePosition();
@@ -69,45 +66,30 @@ public class DiskPositionalIndex implements Index {
             int docId = 0;
             int lastDocId = 0;
 
-            byte docIdsBuffer[] = new byte[4];
-            byte positionsBuffer[] = new byte[4];
-            /// byte wdtBuffer[] = new byte[8];
+            byte docIdsByteBuffer[] = new byte[4];
+            byte positionsByteBuffer[] = new byte[4];
 
-            for (int docIdIndex = 0; docIdIndex < documentFrequency; docIdIndex++) {
+            for (int i = 0; i < documentFrequency; i++) {
 
-                // Reads the 4 bytes of the docId into docIdsBuffer
-                postings.read(docIdsBuffer, 0, docIdsBuffer.length);
+                // Reads the document Id into docIdsByteBuffer
+                postings.read(docIdsByteBuffer, 0, docIdsByteBuffer.length);
 
-                // Convert the byte representation of the docId into the integer
-                // representation
-                // Current docId is the difference between the lastDocId and the
-                // currentDocId
-                // So add the lastDocId to the current number read from the
-                // postings file to get the currentDocId
-                docId = ByteBuffer.wrap(docIdsBuffer).getInt() + lastDocId;
-
-                // Next 8 bytes is the document weight corresponding to the
-                // postings.skipBytes(8);
-                /// postings.read(wdtBuffer, 0, wdtBuffer.length);
-                /// double wdt = ByteBuffer.wrap(wdtBuffer).getDouble();
-
-                // Allocate a buffer for the 4 byte term frequency value
+                // (docId + lastDocId) <-> doc id gaps
+                docId = ByteBuffer.wrap(docIdsByteBuffer).getInt() + lastDocId;
                 buffer = new byte[4];
 
-                // Read the term frequency
                 postings.read(buffer, 0, buffer.length);
-                int termFreq = ByteBuffer.wrap(buffer).getInt();
 
-                // Create a positions list storing the position of each occurence of this term
-                // in this document
-                int[] positions = new int[termFreq];
+                // number of times term occurs in the doc
+                int termFrequency = ByteBuffer.wrap(buffer).getInt();
+                int[] positions = new int[termFrequency];
 
-                // Iterate through the postings file and get the positions of this term into the
-                // positions array
                 int lastPositionGap = 0;
-                for (int positionIndex = 0; positionIndex < termFreq; positionIndex++) {
-                    postings.read(positionsBuffer, 0, positionsBuffer.length);
-                    positions[positionIndex] = ByteBuffer.wrap(positionsBuffer).getInt() + lastPositionGap;
+                for (int positionIndex = 0; positionIndex < termFrequency; positionIndex++) {
+                    postings.read(positionsByteBuffer, 0, positionsByteBuffer.length);
+
+                    // (current position + last position) <-> position gaps
+                    positions[positionIndex] = ByteBuffer.wrap(positionsByteBuffer).getInt() + lastPositionGap;
                     lastPositionGap = positions[positionIndex];
                 }
 
@@ -115,26 +97,27 @@ public class DiskPositionalIndex implements Index {
 
                 Posting Posting = new Posting(docId, Arrays.stream(positions).boxed().collect(Collectors.toList()));
 
-                docList.add(Posting);
+                docIds.add(Posting);
             }
 
-            return docList;
+            return docIds;
         } catch (Exception ex) {
-            ex.getStackTrace();
+            ex.printStackTrace();
         }
 
         return null;
     }
 
     /**
-     * Retrieves a list of Postings of documents that contain the given term.
+     * Retrieves a list of Postings of documents that contain the given term without
+     * positions
      */
     public List<Posting> getPostingsExcludePositions(String term) {
         try {
-            // initialize the array that will hold the postings.
-            List<Posting> docList = new ArrayList<Posting>();
+            List<Posting> docIds = new ArrayList<Posting>();
 
-            long bytePosition = 1;// Get the byte position from the database for the particular term
+            TermPositionModel termPositionModel = termPositionCrud.getTermPositionModel(term);
+            long bytePosition = termPositionModel.getBytePosition();
 
             // Using the already-opened postings.bin file, seek to the position of the term
             postings.seek(bytePosition);
@@ -147,40 +130,28 @@ public class DiskPositionalIndex implements Index {
             int docId = 0;
             int lastDocId = 0;
 
-            byte docIdsBuffer[] = new byte[4];
-            /// byte wdtBuffer[] = new byte[8];
+            byte docIdsByteBuffer[] = new byte[4];
 
-            for (int docIdIndex = 0; docIdIndex < documentFrequency; docIdIndex++) {
+            for (int i = 0; i < documentFrequency; i++) {
 
-                // Reads the 4 bytes of the docId into docIdsBuffer
-                postings.read(docIdsBuffer, 0, docIdsBuffer.length);
+                // Reads the document Id into docIdsByteBuffer
+                postings.read(docIdsByteBuffer, 0, docIdsByteBuffer.length);
 
-                // Convert the byte representation of the docId into the integer
-                // representation
-                // Current docId is the difference between the lastDocId and the
-                // currentDocId
-                // So add the lastDocId to the current number read from the
-                // postings file to get the currentDocId
-                docId = ByteBuffer.wrap(docIdsBuffer).getInt() + lastDocId;
-
-                // Next 8 bytes is the document weight corresponding to the
-                // postings.skipBytes(8);
-                /// postings.read(wdtBuffer, 0, wdtBuffer.length);
-                /// double wdt = ByteBuffer.wrap(wdtBuffer).getDouble();
-
-                // Allocate a buffer for the 4 byte term frequency value
+                // (docId + lastDocId) <-> doc id gaps
+                docId = ByteBuffer.wrap(docIdsByteBuffer).getInt() + lastDocId;
                 buffer = new byte[4];
 
-                // Read the term frequency
                 postings.read(buffer, 0, buffer.length);
+                Long termFrequency = ByteBuffer.wrap(buffer).getLong();
+
                 lastDocId = docId;
 
-                docList.add(new Posting(docId));
+                docIds.add(new Posting(docId, termFrequency));
             }
 
-            return docList;
+            return docIds;
         } catch (Exception ex) {
-            ex.getStackTrace();
+            ex.printStackTrace();
         }
 
         return null;
@@ -192,6 +163,13 @@ public class DiskPositionalIndex implements Index {
      * @return list of all vocabs
      */
     public List<String> getVocabulary() {
+        try {
+            List<String> vocabulary = termPositionCrud.getVocabularyTerm();
+            return vocabulary;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 

@@ -29,3 +29,5 @@ all-nps-sites-extracted
 
 target/
 *.db
+*.bin
+builds/

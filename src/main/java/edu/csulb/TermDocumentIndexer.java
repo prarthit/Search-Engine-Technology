@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -19,22 +20,25 @@ import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.documents.FileDocument;
 import cecs429.indexing.BiwordInvertedIndex;
-import cecs429.indexing.DiskIndexWriter;
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
 import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.indexing.Posting;
+import cecs429.indexing.diskIndex.DiskIndexEnum;
+import cecs429.indexing.diskIndex.DiskIndexWriter;
+import cecs429.indexing.diskIndex.DiskPositionalIndex;
 import cecs429.querying.BooleanQueryParser;
 import cecs429.querying.QueryComponent;
 import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.BasicTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 import cecs429.text.TokenProcessor;
+import cecs429.utils.Utils;
 
 public class TermDocumentIndexer {
 	private static String prevDirectoryPath = "", newDirectoryPath = ""; // Directory name where the corpus resides
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, SQLException {
 		Scanner sc = new Scanner(System.in);
 
 		do {
@@ -61,13 +65,25 @@ public class TermDocumentIndexer {
 				// input directory.
 				corpus = DirectoryCorpus
 						.loadDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()));
-				// Index the documents of the directory.
-				index = indexCorpus(corpus, processor);
 
-				// Build disk-index from the corpus 
-				String diskpath = "C:\\Users\\Dman\\Search-Engine-Technology\\src\\test\\java\\test_docs\\postings.bin";
-				DiskIndexWriter dWriter = new DiskIndexWriter(index, diskpath);
-				dWriter.writeIndex();
+				
+				String postingsFileName = DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName();
+				File binsDirectory = Utils.createDirectory("src/builds/bin");
+				String childDirectoryName = Utils.getChildDirectoryName(newDirectoryPath);
+
+				String diskDirectoryPath = binsDirectory.getAbsolutePath() + "/" + childDirectoryName;
+				File diskFilePath = new File(diskDirectoryPath + postingsFileName);
+				
+				if(diskFilePath.exists() && diskFilePath.length() > 0){
+					// Read from the already existed disk index
+					index = new DiskPositionalIndex(diskDirectoryPath);
+				}else{
+					// Index the documents of the directory.
+					index = indexCorpus(corpus, processor);
+					// Build and write the disk index
+					DiskIndexWriter dWriter = new DiskIndexWriter(index, diskDirectoryPath);
+					dWriter.writeIndex();
+				}
 
 				// Build a k-gram index from the corpus
 				KGramIndex kGramIndex = buildKGramIndex(corpus);

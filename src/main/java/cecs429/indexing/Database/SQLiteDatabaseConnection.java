@@ -1,27 +1,22 @@
-package cecs429.indexing.Database;
+package cecs429.indexing.database;
 
+import java.io.File;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
+import cecs429.utils.Utils;
 
 public class SQLiteDatabaseConnection {
     private static Connection conn = null;
 
     static {
-        String fileName = "DiskTermPosition.db";
-        String path = "jdbc:sqlite:" + fileName;
+        File dbFileDirectory = Utils.createDirectory("src/builds/db");
+        String dbFilePath = dbFileDirectory.getAbsolutePath() + "/" + "DiskTermPosition.db";
+        String path = "jdbc:sqlite:" + dbFilePath;
         try {
             Class.forName("org.sqlite.JDBC");
             conn = DriverManager.getConnection(path);
-            if (conn != null) {
-                DatabaseMetaData meta = conn.getMetaData();
-
-                // createTable(conn);
-                System.out.println("The driver name is " + meta.getDriverName());
-                System.out.println("A new database has been created.");
-            }
-
         } catch (SQLException | ClassNotFoundException e) {
             System.out.println(e.getMessage());
         }

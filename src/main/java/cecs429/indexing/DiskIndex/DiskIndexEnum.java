@@ -1,20 +1,14 @@
-package cecs429.indexing.DiskIndex;
+package cecs429.indexing.diskIndex;
 
 public enum DiskIndexEnum {
-    POSITIONAL_INDEX("", ""),
-    BIWORD_INDEX( "",""),
-    KGRAM_INDEX("", "");
+    POSITIONAL_INDEX("_postings.bin"),
+    BIWORD_INDEX("_biwordPostings.bin"),
+    KGRAM_INDEX("_kgramPostings.bin");
 
-    private String binVocabFileName;
     private String binPostingFileName;
 
-    DiskIndexEnum(String binVocabFileName, String binPostingFileName){
-        this.binVocabFileName = binVocabFileName;
+    DiskIndexEnum(String binPostingFileName){
         this.binPostingFileName = binPostingFileName;
-    }
-
-    public String getVocabFileName(){
-        return this.binVocabFileName;
     }
 
     public String getPostingFileName(){

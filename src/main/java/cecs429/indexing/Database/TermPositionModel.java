@@ -1,9 +1,9 @@
-package cecs429.indexing.Database;
+package cecs429.indexing.database;
 
 public class TermPositionModel {
-    int id;
-    String term;
-    int byte_position;
+    private int id;
+    private String term;
+    private long byte_position;
   
     public TermPositionModel() {}
   
@@ -33,12 +33,12 @@ public class TermPositionModel {
         this.term = term;
     }
   
-    public int getBytePosition()
+    public long getBytePosition()
     {
         return byte_position;
     }
   
-    public void setBytePosition(int byte_position)
+    public void setBytePosition(long byte_position)
     {
         this.byte_position = byte_position;
     }

@@ -1,4 +1,4 @@
-package cecs429.indexing.Database;
+package cecs429.indexing.database;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,13 +11,14 @@ import java.util.List;
 public class TermPositionCrud implements TermPositionDao {
 
     private static Connection con = SQLiteDatabaseConnection.getConnection();
+    private String directoryName;
 
-    public TermPositionCrud() throws SQLException{
-        createTable();
+    public TermPositionCrud(String directoryName) {
+        this.directoryName = directoryName;
     }
-    
+
     public void createTable() throws SQLException {
-        String sql = "CREATE TABLE IF NOT EXISTS TermBytePosition (\n"
+        String sql = "CREATE TABLE IF NOT EXISTS `" + directoryName + "-TermBytePosition` (\n"
                 + " id integer PRIMARY KEY,\n"
                 + " term text NOT NULL,\n"
                 + " byte_position integer\n"
@@ -27,31 +28,24 @@ public class TermPositionCrud implements TermPositionDao {
             Statement stmt = con.createStatement();
             stmt.execute(sql);
         } catch (SQLException ex) {
+            ex.printStackTrace();
         }
     }
-    
+
     @Override
     public int add(TermPositionModel tpm) throws SQLException {
-        String query = "insert into TermBytePosition(term, "
+        String query = "insert into `" + directoryName + "-TermBytePosition`(term, "
                 + "byte_position) VALUES (?, ?)";
         PreparedStatement ps = con.prepareStatement(query);
         ps.setString(1, tpm.getTerm());
-        ps.setInt(2, tpm.getBytePosition());
+        ps.setLong(2, tpm.getBytePosition());
         int n = ps.executeUpdate();
         return n;
     }
 
     @Override
-    public void delete(int id) throws SQLException {
-        String query = "delete from TermBytePosition where id =?";
-        PreparedStatement ps = con.prepareStatement(query);
-        ps.setInt(1, id);
-        ps.executeUpdate();
-    }
-
-    @Override
     public TermPositionModel getTermPositionModel(String term) throws SQLException {
-        String query = "select * from TermBytePosition where term = ?";
+        String query = "select * from `" + directoryName + "-TermBytePosition` where term = ?";
         PreparedStatement ps = con.prepareStatement(query);
 
         ps.setString(1, term);
@@ -63,7 +57,7 @@ public class TermPositionCrud implements TermPositionDao {
             check = true;
             tpm.setId(rs.getInt("id"));
             tpm.setTerm(rs.getString("term"));
-            tpm.setBytePosition(rs.getInt("byte_position"));
+            tpm.setBytePosition(rs.getLong("byte_position"));
         }
 
         if (check == true) {
@@ -73,29 +67,28 @@ public class TermPositionCrud implements TermPositionDao {
     }
 
     @Override
-    public List<TermPositionModel> getTermPositionModels() throws SQLException {
-        String query = "select * from TermBytePosition";
+    public List<String> getVocabularyTerm() throws SQLException {
+        String query = "select term from `" + directoryName + "-TermBytePosition` order by term";
         PreparedStatement ps = con.prepareStatement(query);
         ResultSet rs = ps.executeQuery();
-        List<TermPositionModel> ls = new ArrayList<>();
+        List<String> ls = new ArrayList<>();
 
         while (rs.next()) {
-            TermPositionModel tpm = new TermPositionModel();
-            tpm.setId(rs.getInt("id"));
-            tpm.setTerm(rs.getString("term"));
-            tpm.setBytePosition(rs.getInt("byte_position"));
-            ls.add(tpm);
+            // TermPositionModel tpm = new TermPositionModel();
+            // tpm.setId(rs.getInt("id"));
+            // tpm.setTerm();
+            // tpm.setBytePosition(rs.getInt("byte_position"));
+            ls.add(rs.getString("term"));
         }
         return ls;
     }
-
     @Override
     public void update(TermPositionModel tpm) throws SQLException {
-        String query = "update TermBytePosition set term=?, "
+        String query = "update `" + directoryName + "-TermBytePosition` set term=?, "
                 + " byte_position= ? where id = ?";
         PreparedStatement ps = con.prepareStatement(query);
         ps.setString(1, tpm.getTerm());
-        ps.setInt(2, tpm.getBytePosition());
+        ps.setLong(2, tpm.getBytePosition());
         ps.setInt(3, tpm.getId());
         ps.executeUpdate();
     }
