@@ -10,11 +10,10 @@ import cecs429.indexing.Posting;
 import cecs429.text.TokenProcessor;
 
 /**
- * Represents a phrase literal consisting of one or more terms that must occur
- * in sequence.
+ * Represents a near literal consisting of 2 terms with near operator
  */
 public class NearLiteral implements QueryComponent {
-	// The list of individual terms in the phrase.
+	// The list of individual terms in the near literal.
 	private List<String> mTerms = new ArrayList<>();
 	private Integer kNear = 1;
 	private KGramIndex mKGramIndex;

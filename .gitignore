@@ -28,3 +28,4 @@ all-nps-sites-extracted
 .DS_Store
 
 target/
+*.db
