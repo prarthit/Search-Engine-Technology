@@ -19,6 +19,7 @@ import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.documents.FileDocument;
 import cecs429.indexing.BiwordInvertedIndex;
+import cecs429.indexing.DiskIndexWriter;
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
 import cecs429.indexing.PositionalInvertedIndex;
@@ -62,6 +63,11 @@ public class TermDocumentIndexer {
 						.loadDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()));
 				// Index the documents of the directory.
 				index = indexCorpus(corpus, processor);
+
+				// Build disk-index from the corpus 
+				String diskpath = "C:\\Users\\Dman\\Search-Engine-Technology\\src\\test\\java\\test_docs\\postings.bin";
+				DiskIndexWriter dWriter = new DiskIndexWriter(index, diskpath);
+				dWriter.writeIndex();
 
 				// Build a k-gram index from the corpus
 				KGramIndex kGramIndex = buildKGramIndex(corpus);
