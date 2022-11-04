@@ -1,8 +1,8 @@
 package cecs429.indexing.diskIndex;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -18,25 +18,26 @@ public class DiskIndexWriter {
 
     TermPositionCrud termPositionCrud;
     TermPositionModel termPositionModel;
-    
-    public DiskIndexWriter(Index positionalDiskIndex, String diskDirectoryPath) throws SQLException{
+
+    public DiskIndexWriter(Index positionalDiskIndex, String diskDirectoryPath) throws SQLException {
         this.positionalDiskIndex = positionalDiskIndex;
         this.diskDirectoryPath = diskDirectoryPath;
     }
 
-    public void writeIndex() throws SQLException{
-        try{
+    public void writeIndex() throws SQLException {
+        try {
             termPositionCrud = new TermPositionCrud(Utils.getChildDirectoryName(diskDirectoryPath));
             termPositionCrud.createTable();
 
             termPositionModel = new TermPositionModel();
 
-            RandomAccessFile raf = new RandomAccessFile(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName(), "rw");
+            RandomAccessFile raf = new RandomAccessFile(
+                    diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName(), "rw");
             raf.seek(0);
 
             List<String> vocab = positionalDiskIndex.getVocabulary();
-            for(String term : vocab){
-                
+            for (String term : vocab) {
+
                 termPositionModel.setTerm(term);
                 termPositionModel.setBytePosition(raf.getChannel().position());
                 termPositionCrud.add(termPositionModel);
@@ -46,29 +47,29 @@ public class DiskIndexWriter {
                 raf.write(docFreqterm, 0, docFreqterm.length);
 
                 int lastDocId = 0;
-                for(Posting p : postings){
+                for (Posting p : postings) {
                     int docId = p.getDocumentId();
 
                     // docId - lastDocId includes a gap
-                    byte[] docIdBytes = ByteBuffer.allocate(4).putInt(docId - lastDocId).array(); 
-					raf.write(docIdBytes, 0, docIdBytes.length);
-                    
+                    byte[] docIdBytes = ByteBuffer.allocate(4).putInt(docId - lastDocId).array();
+                    raf.write(docIdBytes, 0, docIdBytes.length);
+
                     List<Integer> positions = p.getPositions();
                     int termFrequency = positions.size();
                     byte[] termFreqBytes = ByteBuffer.allocate(4).putInt(termFrequency).array();
                     raf.write(termFreqBytes);
-                    
+
                     int lastPos = 0;
-                    for(int pos : positions){
-                        byte[] posBytes = ByteBuffer.allocate(4).putInt(pos - lastPos).array(); 
-						raf.write(posBytes, 0, posBytes.length);
+                    for (int pos : positions) {
+                        byte[] posBytes = ByteBuffer.allocate(4).putInt(pos - lastPos).array();
+                        raf.write(posBytes, 0, posBytes.length);
                         lastPos = pos;
-                    } 
+                    }
                     lastDocId = docId;
                 }
             }
             raf.close();
-        }catch (IOException ex) {
+        } catch (IOException ex) {
             ex.printStackTrace();
         }
     }

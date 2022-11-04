@@ -66,18 +66,17 @@ public class TermDocumentIndexer {
 				corpus = DirectoryCorpus
 						.loadDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()));
 
-				
 				String postingsFileName = DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName();
-				File binsDirectory = Utils.createDirectory("src/builds/bin");
+				File binsDirectory = Utils.createDirectory("src/main/resources");
 				String childDirectoryName = Utils.getChildDirectoryName(newDirectoryPath);
 
 				String diskDirectoryPath = binsDirectory.getAbsolutePath() + "/" + childDirectoryName;
 				File diskFilePath = new File(diskDirectoryPath + postingsFileName);
-				
-				if(diskFilePath.exists() && diskFilePath.length() > 0){
+
+				if (diskFilePath.exists() && diskFilePath.length() > 0) {
 					// Read from the already existed disk index
 					index = new DiskPositionalIndex(diskDirectoryPath);
-				}else{
+				} else {
 					// Index the documents of the directory.
 					index = indexCorpus(corpus, processor);
 					// Build and write the disk index
