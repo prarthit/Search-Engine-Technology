@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class Posting {
 	private int mDocumentId;
-	private long mTermFrequency;
+	private int mTermFrequency;
 	private List<Integer> mPositions; // Positions of term in document
 
 	public Posting(int documentId) {
@@ -22,14 +22,9 @@ public class Posting {
 		mPositions = new ArrayList<>(Arrays.asList(position));
 	}
 
-	public Posting(int documentId, List<Integer>  positions) {
+	public Posting(int documentId, List<Integer> positions) {
 		mDocumentId = documentId;
 		mPositions = positions;
-	}
-
-	public Posting(int documentId, long termFrequency) {
-		mDocumentId = documentId;
-		mTermFrequency = termFrequency;
 	}
 
 	// Add position of term to mPositions list
@@ -45,7 +40,11 @@ public class Posting {
 		return mDocumentId;
 	}
 
-	public long getTermFrequency() {
+	public int getTermFrequency() {
 		return mTermFrequency;
+	}
+
+	public void setTermFrequency(int tf) {
+		mTermFrequency = tf;
 	}
 }

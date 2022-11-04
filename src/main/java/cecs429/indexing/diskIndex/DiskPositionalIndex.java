@@ -36,7 +36,7 @@ public class DiskPositionalIndex implements Index {
         try {
             postings = new RandomAccessFile(
                     new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName()), "r");
-                    
+
             termPositionCrud = new TermPositionCrud(Utils.getChildDirectoryName(diskDirectoryPath));
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
@@ -142,11 +142,14 @@ public class DiskPositionalIndex implements Index {
                 buffer = new byte[4];
 
                 postings.read(buffer, 0, buffer.length);
-                Long termFrequency = ByteBuffer.wrap(buffer).getLong();
+                int termFrequency = ByteBuffer.wrap(buffer).getInt();
 
                 lastDocId = docId;
 
-                docIds.add(new Posting(docId, termFrequency));
+                Posting p = new Posting(docId);
+                p.setTermFrequency(termFrequency);
+
+                docIds.add(p);
             }
 
             return docIds;
