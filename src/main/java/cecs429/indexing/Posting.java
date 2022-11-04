@@ -9,6 +9,7 @@ import java.util.List;
  */
 public class Posting {
 	private int mDocumentId;
+	private int mTermFrequency;
 	private List<Integer> mPositions; // Positions of term in document
 
 	public Posting(int documentId) {
@@ -21,7 +22,7 @@ public class Posting {
 		mPositions = new ArrayList<>(Arrays.asList(position));
 	}
 
-	public Posting(int documentId, List<Integer>  positions) {
+	public Posting(int documentId, List<Integer> positions) {
 		mDocumentId = documentId;
 		mPositions = positions;
 	}
@@ -37,5 +38,13 @@ public class Posting {
 
 	public int getDocumentId() {
 		return mDocumentId;
+	}
+
+	public int getTermFrequency() {
+		return mTermFrequency;
+	}
+
+	public void setTermFrequency(int tf) {
+		mTermFrequency = tf;
 	}
 }

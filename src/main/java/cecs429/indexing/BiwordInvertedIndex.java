@@ -40,6 +40,12 @@ public class BiwordInvertedIndex implements Index {
 		return postings;
 	}
 
+	@Override
+	public List<Posting> getPostingsExcludePositions(String term) {
+		List<Posting> postings = (List<Posting>) dict.getOrDefault(term, new ArrayList<Posting>());
+		return postings;
+	}
+	
 	public List<String> getVocabulary() {
 		// Convert vocabulary set to list and sort it
 		List<String> vocabulary = new ArrayList<>(dict.keySet());
