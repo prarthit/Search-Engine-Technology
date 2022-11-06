@@ -27,6 +27,9 @@ import cecs429.indexing.Posting;
 import cecs429.indexing.diskIndex.DiskIndexEnum;
 import cecs429.indexing.diskIndex.DiskIndexWriter;
 import cecs429.indexing.diskIndex.DiskPositionalIndex;
+import cecs429.indexing.variantFormulas.DefaultWeightingStrategy;
+import cecs429.indexing.variantFormulas.DocumentWeightingValues;
+import cecs429.indexing.variantFormulas.VariantFormulaContext;
 import cecs429.querying.BooleanQueryParser;
 import cecs429.querying.QueryComponent;
 import cecs429.text.AdvancedTokenProcessor;
@@ -104,6 +107,18 @@ public class TermDocumentIndexer {
 			} else {
 				QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
 				findQuery(queryComponent, index, corpus, sc);
+
+				// Approach to use the strategy patterm from client
+				// Make a menu for all 4 weighting scheme whichever user selected and call that using the reference below
+				// Pass the correct parameters (N, tftd, dft, avgtftd, etc...) coming from docWeights.bin file to the DocumentWeightingValues object
+				try{
+					VariantFormulaContext variantFormulacontext = new VariantFormulaContext();
+					variantFormulacontext.setVariantStrategy(new DefaultWeightingStrategy());
+					variantFormulacontext.executeVariantStrategy(new DocumentWeightingValues(0, 0, 0, 0, 0, 0, 0, 0));
+				}
+				catch(Exception ex){
+					ex.printStackTrace();
+				}
 			}
 		}
 
