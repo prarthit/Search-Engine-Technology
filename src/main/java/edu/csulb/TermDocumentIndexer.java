@@ -2,6 +2,7 @@ package edu.csulb;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -13,6 +14,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 import java.util.Scanner;
 
 import cecs429.documents.DirectoryCorpus;
@@ -39,17 +41,24 @@ public class TermDocumentIndexer {
 	private static String prevDirectoryPath = "", newDirectoryPath = ""; // Directory name where the corpus resides
 
 	public static void main(String[] args) throws IOException, SQLException {
-		Scanner sc = new Scanner(System.in);
+		Properties prop = new Properties();
+		prop.load(new FileInputStream("src/config.properties"));
 
-		do {
+		System.out.println("Reading corpus directory path from config.properties file");
+		newDirectoryPath = prop.getProperty("corpus_directory_path");
+		Scanner sc = new Scanner(System.in);
+		while (!isValidDirectory(newDirectoryPath)) {
 			System.out.print("Enter directory path: ");
 			newDirectoryPath = sc.nextLine().trim();
-		} while (!isValidDirectory(newDirectoryPath));
+		}
 
 		DocumentCorpus corpus = null;
 		Index index = null;
-		TokenProcessor processor = null;
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
+
+		// Create basic or advanced token processor based on properties file
+		TokenProcessor processor = getTokenProcessor(prop.getProperty("token_processor"));
+		booleanQueryParser.setTokenProcessor(processor);
 
 		// Loop for taking search input query
 		while (true) {
@@ -57,17 +66,13 @@ public class TermDocumentIndexer {
 			if (!prevDirectoryPath.equals(newDirectoryPath)) {
 				prevDirectoryPath = newDirectoryPath;
 
-				// Create basic or advanced token processor based on user input
-				processor = inputTokenProcessor(sc);
-				booleanQueryParser.setTokenProcessor(processor);
-
 				// Create a DocumentCorpus to load either .txt or .json documents from the user
 				// input directory.
 				corpus = DirectoryCorpus
 						.loadDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()));
 
 				String postingsFileName = DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName();
-				File binsDirectory = Utils.createDirectory("src/main/resources");
+				File binsDirectory = Utils.createDirectory(prop.getProperty("resources_dir"));
 				String childDirectoryName = Utils.getChildDirectoryName(newDirectoryPath);
 
 				String diskDirectoryPath = binsDirectory.getAbsolutePath() + "/" + childDirectoryName;
@@ -107,13 +112,13 @@ public class TermDocumentIndexer {
 			}
 		}
 
+		sc.close();
+
 		return;
 	}
 
-	private static TokenProcessor inputTokenProcessor(Scanner sc) {
-		System.out.print("Enter token processor (Basic=0, Advanced=1): ");
-		String input = sc.nextLine().trim();
-		if (input.equals("0")) {
+	private static TokenProcessor getTokenProcessor(String tokenProcessor) {
+		if (tokenProcessor.equals("BASIC")) {
 			return new BasicTokenProcessor();
 		} else {
 			return new AdvancedTokenProcessor();
@@ -151,7 +156,7 @@ public class TermDocumentIndexer {
 					try {
 						readFile(newDirectoryPath + "/" + fileName);
 					} catch (IOException e) {
-						System.out.println("Unable to read file");
+						System.out.println("Unable to read the document");
 					}
 				}
 			}
