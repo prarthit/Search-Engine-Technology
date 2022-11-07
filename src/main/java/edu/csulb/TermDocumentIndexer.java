@@ -1,18 +1,10 @@
 package edu.csulb;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
@@ -31,11 +23,8 @@ import cecs429.indexing.diskIndex.DiskIndexWriter;
 import cecs429.indexing.diskIndex.DiskPositionalIndex;
 import cecs429.querying.BooleanQueryParser;
 import cecs429.querying.QueryComponent;
-import cecs429.text.AdvancedTokenProcessor;
-import cecs429.text.BasicTokenProcessor;
-import cecs429.text.EnglishTokenStream;
 import cecs429.text.TokenProcessor;
-import cecs429.utils.Utils;
+import utils.Utils;
 
 public class TermDocumentIndexer {
 	private static String prevDirectoryPath = "", newDirectoryPath = ""; // Directory name where the corpus resides
@@ -47,7 +36,7 @@ public class TermDocumentIndexer {
 		System.out.println("Reading corpus directory path from config.properties file");
 		newDirectoryPath = prop.getProperty("corpus_directory_path");
 		Scanner sc = new Scanner(System.in);
-		while (!isValidDirectory(newDirectoryPath)) {
+		while (!Utils.isValidDirectory(newDirectoryPath)) {
 			System.out.print("Enter directory path: ");
 			newDirectoryPath = sc.nextLine().trim();
 		}
@@ -57,7 +46,7 @@ public class TermDocumentIndexer {
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
 
 		// Create basic or advanced token processor based on properties file
-		TokenProcessor processor = getTokenProcessor(prop.getProperty("token_processor"));
+		TokenProcessor processor = Utils.getTokenProcessor(prop.getProperty("token_processor"));
 		booleanQueryParser.setTokenProcessor(processor);
 
 		// Loop for taking search input query
@@ -83,18 +72,18 @@ public class TermDocumentIndexer {
 					index = new DiskPositionalIndex(diskDirectoryPath);
 				} else {
 					// Index the documents of the directory.
-					index = indexCorpus(corpus, processor);
+					index = new PositionalInvertedIndex(corpus, processor);
 					// Build and write the disk index
 					DiskIndexWriter dWriter = new DiskIndexWriter(index, diskDirectoryPath);
 					dWriter.writeIndex();
 				}
 
 				// Build a k-gram index from the corpus
-				KGramIndex kGramIndex = buildKGramIndex(corpus);
+				KGramIndex kGramIndex = new KGramIndex(corpus);
 				booleanQueryParser.setKGramIndex(kGramIndex);
 
 				// Build a biword index from the corpus
-				Index biwordIndex = buildBiwordIndex(corpus, processor);
+				Index biwordIndex = new BiwordInvertedIndex(corpus, processor);
 				booleanQueryParser.setBiwordIndex(biwordIndex);
 			}
 
@@ -115,21 +104,6 @@ public class TermDocumentIndexer {
 		sc.close();
 
 		return;
-	}
-
-	private static TokenProcessor getTokenProcessor(String tokenProcessor) {
-		if (tokenProcessor.equals("BASIC")) {
-			return new BasicTokenProcessor();
-		} else {
-			return new AdvancedTokenProcessor();
-		}
-	}
-
-	public static boolean isValidDirectory(String directoryPath) {
-		boolean isValidDirectory = Files.isDirectory(Paths.get(directoryPath));
-		if (!isValidDirectory)
-			System.out.println("Invalid directory path");
-		return isValidDirectory;
 	}
 
 	private static void findQuery(QueryComponent queryComponent, Index index, DocumentCorpus corpus, Scanner sc) {
@@ -154,7 +128,7 @@ public class TermDocumentIndexer {
 					System.out.print("Enter document name: ");
 					String fileName = sc.nextLine();
 					try {
-						readFile(newDirectoryPath + "/" + fileName);
+						utils.Utils.readFile(newDirectoryPath + "/" + fileName);
 					} catch (IOException e) {
 						System.out.println("Unable to read the document");
 					}
@@ -172,7 +146,7 @@ public class TermDocumentIndexer {
 		} else if (query.startsWith(":index ")) {
 			query = query.replaceAll(":index ", "").trim();
 
-			if (isValidDirectory(query)) {
+			if (Utils.isValidDirectory(query)) {
 				newDirectoryPath = query;
 			}
 		} else if (query.equals(":vocab")) {
@@ -188,157 +162,5 @@ public class TermDocumentIndexer {
 		}
 
 		return true;
-	}
-
-	public static Index indexCorpus(DocumentCorpus corpus, TokenProcessor processor) throws IOException {
-		long startTime = System.currentTimeMillis(); // Start time to build positional Inverted Index
-		System.out.println("Indexing...");
-		PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
-
-		// Add terms to the inverted index with addPosting.
-		for (Document d : corpus.getDocuments()) {
-			Reader content = d.getContent();
-
-			// Tokenize the document's content by constructing an EnglishTokenStream around
-			// the document's content.
-			EnglishTokenStream englishTokenStream = new EnglishTokenStream(content);
-
-			// Iterate through the tokens in the document, processing them
-			// using a BasicTokenProcessor, and adding them to the
-			// positional inverted index dictionary.
-			Iterator<String> tokens = englishTokenStream.getTokens().iterator();
-			int position = 0; // Position of term in document
-			while (tokens.hasNext()) {
-				List<String> terms = processor.processToken(tokens.next());
-				int documentId = d.getId();
-				for (String term : terms) {
-					positionalInvertedIndex.addTerm(term, documentId, position);
-				}
-				position++;
-			}
-
-			content.close();
-			englishTokenStream.close();
-		}
-
-		long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
-
-		System.out.println(
-				"Time taken to build positional inverted index: " + ((endTime - startTime) / 1000)
-						+ " seconds");
-
-		return positionalInvertedIndex;
-	}
-
-	public static KGramIndex buildKGramIndex(DocumentCorpus corpus)
-			throws IOException {
-		long startTime = System.currentTimeMillis(); // Start time to build k-gram index
-		System.out.println("Building k-gram index...");
-
-		HashSet<String> vocabulary = new HashSet<>();
-		AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
-
-		// Add terms to the inverted index with addPosting.
-		for (Document d : corpus.getDocuments()) {
-			Reader content = d.getContent();
-
-			// Tokenize the document's content by constructing an EnglishTokenStream around
-			// the document's content.
-			EnglishTokenStream englishTokenStream = new EnglishTokenStream(content);
-
-			// Iterate through the tokens in the document, processing them
-			// using a BasicTokenProcessor, and adding them to the
-			// positional inverted index dictionary.
-			Iterator<String> tokens = englishTokenStream.getTokens().iterator();
-			while (tokens.hasNext()) {
-				String term = processor.preProcessToken(tokens.next());
-				vocabulary.add(term);
-			}
-
-			content.close();
-			englishTokenStream.close();
-		}
-
-		// Sort the vocabulary
-		List<String> vocabulary_list = new ArrayList<String>(vocabulary);
-		Collections.sort(vocabulary_list);
-
-		KGramIndex kGramIndex = new KGramIndex(vocabulary_list);
-
-		long endTime = System.currentTimeMillis(); // End time to build k-gram index
-
-		System.out.println(kGramIndex.getKGrams().size() + " distinct kgrams in index");
-		System.out.println(
-				"Time taken to build k-gram index: " + ((endTime - startTime) / 1000)
-						+ " seconds");
-
-		return kGramIndex;
-	}
-
-	private static Index buildBiwordIndex(DocumentCorpus corpus, TokenProcessor processor) throws IOException {
-		long startTime = System.currentTimeMillis(); // Start time to build biword Inverted Index
-		System.out.println("Building biword index...");
-
-		BiwordInvertedIndex biwordInvertedIndex = new BiwordInvertedIndex();
-
-		// Add terms to the inverted index with addPosting.
-		for (Document d : corpus.getDocuments()) {
-			Reader content = d.getContent();
-
-			// Tokenize the document's content by constructing an EnglishTokenStream around
-			// the document's content.
-			EnglishTokenStream englishTokenStream = new EnglishTokenStream(content);
-
-			// Iterate through the tokens in the document, processing them
-			// using a BasicTokenProcessor, and adding them to the
-			// biword inverted index dictionary.
-			Iterator<String> tokens = englishTokenStream.getTokens().iterator();
-			List<String> twoConsecutiveTerms = new ArrayList<>();
-			while (tokens.hasNext()) {
-				List<String> terms = processor.processToken(tokens.next());
-				twoConsecutiveTerms.addAll(terms);
-
-				// If there are more than 1 terms in the twoConsectiveTerms list
-				// generate all biwords and add them to the biword index
-				if (twoConsecutiveTerms.size() > 1) {
-					int documentId = d.getId();
-
-					for (String biword : BiwordInvertedIndex.generateBiwords(twoConsecutiveTerms)) {
-						biwordInvertedIndex.addTerm(biword, documentId);
-					}
-
-					// If all the biwords have been created, only retain the
-					// last term in the twoConsecutiveTerms list in order to pair
-					// it with the upcoming next term.
-					int len = twoConsecutiveTerms.size();
-					String temp = twoConsecutiveTerms.get(len - 1);
-					twoConsecutiveTerms.clear();
-					twoConsecutiveTerms.add(temp);
-				}
-			}
-
-			content.close();
-			englishTokenStream.close();
-		}
-
-		long endTime = System.currentTimeMillis(); // End time to build biword Inverted Index
-
-		System.out.println(
-				"Time taken to build biword inverted index: " + ((endTime - startTime) / 1000)
-						+ " seconds");
-
-		return biwordInvertedIndex;
-	}
-
-	// Generic file reader
-	public static void readFile(String filepath) throws IOException {
-		BufferedReader in;
-		in = new BufferedReader(new FileReader(filepath));
-		String line = in.readLine();
-		while (line != null) {
-			System.out.println(line);
-			line = in.readLine();
-		}
-		in.close();
 	}
 }

@@ -14,7 +14,7 @@ import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
 import cecs429.indexing.database.TermPositionCrud;
 import cecs429.indexing.database.TermPositionModel;
-import cecs429.utils.Utils;
+import utils.Utils;
 
 /**
  * A DiskPositionalIndex can retrieve postings for a term from a data structure

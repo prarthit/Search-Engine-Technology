@@ -5,7 +5,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import cecs429.utils.Utils;
+import utils.Utils;
 
 public class SQLiteDatabaseConnection {
     private static Connection conn = null;
