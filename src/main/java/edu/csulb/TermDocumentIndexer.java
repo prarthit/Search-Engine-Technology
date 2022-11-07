@@ -24,6 +24,7 @@ import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
 import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.indexing.Posting;
+import cecs429.indexing.diskIndex.DiskBiwordIndex;
 import cecs429.indexing.diskIndex.DiskIndexEnum;
 import cecs429.indexing.diskIndex.DiskIndexWriter;
 import cecs429.indexing.diskIndex.DiskPositionalIndex;
@@ -47,7 +48,7 @@ public class TermDocumentIndexer {
 		} while (!isValidDirectory(newDirectoryPath));
 
 		DocumentCorpus corpus = null;
-		Index index = null;
+		Index index = null, biwordIndex = null;
 		TokenProcessor processor = null;
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
 
@@ -74,14 +75,24 @@ public class TermDocumentIndexer {
 				File diskFilePath = new File(diskDirectoryPath + postingsFileName);
 
 				if (diskFilePath.exists() && diskFilePath.length() > 0) {
+					
+					//Call the corpus get documents to set the hashmap for corpus mDocuments
+					corpus.getDocuments();
 					// Read from the already existed disk index
 					index = new DiskPositionalIndex(diskDirectoryPath);
+					biwordIndex = new DiskBiwordIndex(diskDirectoryPath);
+
 				} else {
 					// Index the documents of the directory.
 					index = indexCorpus(corpus, processor);
+					biwordIndex = buildBiwordIndex(corpus, processor);
 					// Build and write the disk index
-					DiskIndexWriter dWriter = new DiskIndexWriter(index, diskDirectoryPath);
+					DiskIndexWriter dWriter = new DiskIndexWriter();
+					dWriter.setPositionalIndex(index, diskDirectoryPath);
 					dWriter.writeIndex();
+
+					dWriter.setBiwordIndex(biwordIndex, diskDirectoryPath);
+					dWriter.writeBiwordIndex();
 				}
 
 				// Build a k-gram index from the corpus
@@ -89,7 +100,8 @@ public class TermDocumentIndexer {
 				booleanQueryParser.setKGramIndex(kGramIndex);
 
 				// Build a biword index from the corpus
-				Index biwordIndex = buildBiwordIndex(corpus, processor);
+				// Index biwordIndex = buildBiwordIndex(corpus, processor);
+
 				booleanQueryParser.setBiwordIndex(biwordIndex);
 			}
 

@@ -66,8 +66,7 @@ public class DiskPositionalIndex implements Index {
 
             int documentFrequency = ByteBuffer.wrap(buffer).getInt();
 
-            int docId = 0;
-            int lastDocId = 0;
+            int docId = 0, lastDocId = 0;
 
             byte docIdsByteBuffer[] = new byte[4];
             byte positionsByteBuffer[] = new byte[4];
