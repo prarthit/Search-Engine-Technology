@@ -118,6 +118,10 @@ public class DiskPositionalIndex implements Index {
             List<Posting> docIds = new ArrayList<Posting>();
 
             TermPositionModel termPositionModel = termPositionCrud.getTermPositionModel(term);
+            if (termPositionModel == null) {
+                return docIds;
+            }
+            
             long bytePosition = termPositionModel.getBytePosition();
 
             // Using the already-opened postings.bin file, seek to the position of the term
