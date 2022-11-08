@@ -102,7 +102,8 @@ public class TermDocumentIndexer {
 					(new BooleanQuerySearch()).findQuery(queryComponent, index, corpus, sc);
 				} else {
 					int k = Integer.parseInt(prop.getProperty("num_results"));
-					(new RankedQuerySearch(k)).findQuery(query, index, corpus, sc);
+					String ranking_score_scheme = prop.getProperty("ranking_score_scheme");
+					(new RankedQuerySearch(k, ranking_score_scheme)).findQuery(query, index, corpus, sc);
 				}
 			}
 		}
