@@ -32,4 +32,10 @@
 - *(default)* `BOOLEAN` for running queries in boolean mode(e.g. Phrase query, Near query, AND query, OR query, Basic query etc.)
 - `RANKED` for running queries in ranked mode with bag of words terminology (only supports Basic and Prase queries)
 
+`ranking_score_scheme`: Algorithm to use for ranking score
+- *(default)* `default` for default scoring algorithm
+- `tf_idf` for scoring using term frequency - inverse document frequency
+- `okapi` for scoring using Okapi BM25
+- `wacky` for scoring using Wacky algorithm
+
 `num_results`: Total number of results to show for ranked query

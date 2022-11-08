@@ -23,6 +23,7 @@ import cecs429.querying.BooleanQueryParser;
 import cecs429.querying.BooleanQuerySearch;
 import cecs429.querying.QueryComponent;
 import cecs429.querying.RankedQuerySearch;
+import cecs429.querying.WildcardLiteral;
 import cecs429.text.TokenProcessor;
 import utils.Utils;
 
@@ -42,7 +43,9 @@ public class TermDocumentIndexer {
 		}
 
 		DocumentCorpus corpus = null;
-		Index index = null, biwordIndex = null;
+		Index index = null;
+		Index biwordIndex = null;
+		KGramIndex kGramIndex = null;
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
 
 		// Create basic or advanced token processor based on properties file
@@ -90,11 +93,10 @@ public class TermDocumentIndexer {
 				}
 
 				// Build a k-gram index from the corpus
-				// KGramIndex kGramIndex = new KGramIndex(corpus);
-				KGramIndex kGramIndex = null;
+				kGramIndex = new KGramIndex(corpus);
 				booleanQueryParser.setKGramIndex(kGramIndex);
 
-				// Set biword index in the boolean query parser
+				// Build a biword index from the corpus
 				booleanQueryParser.setBiwordIndex(biwordIndex);
 			}
 
@@ -109,11 +111,16 @@ public class TermDocumentIndexer {
 			} else {
 				String query_mode = prop.getProperty("query_mode");
 				if (query_mode.equals("BOOLEAN")) {
+					corpus.getDocuments();
+
 					QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
 					(new BooleanQuerySearch()).findQuery(queryComponent, index, corpus, sc);
 				} else {
 					int k = Integer.parseInt(prop.getProperty("num_results"));
-					(new RankedQuerySearch(k)).findQuery(query, index, corpus, sc, processor);
+					String ranking_score_scheme = prop.getProperty("ranking_score_scheme");
+					WildcardLiteral wildcardLiteral = new WildcardLiteral("", processor, kGramIndex);
+					(new RankedQuerySearch(k, ranking_score_scheme, wildcardLiteral)).findQuery(query, index, corpus,
+							sc, processor);
 				}
 			}
 		}

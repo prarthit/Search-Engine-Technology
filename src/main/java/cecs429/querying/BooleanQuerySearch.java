@@ -12,7 +12,7 @@ public class BooleanQuerySearch extends QueryResults {
 
         if (queryComponent != null) {
             List<Posting> searchResultPostings = queryComponent.getPostings(index);
-            displaySearchResults(searchResultPostings, corpus, sc);
+            displaySearchResults(searchResultPostings, null, corpus, sc);
         }
     }
 }

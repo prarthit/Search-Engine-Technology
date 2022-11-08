@@ -10,16 +10,23 @@ import cecs429.documents.FileDocument;
 import cecs429.indexing.Posting;
 
 public abstract class QueryResults {
-    public void displaySearchResults(List<Posting> searchResultPostings, DocumentCorpus corpus, Scanner sc) {
-        int queryFoundInFilesCount = 0;
+    public void displaySearchResults(List<Posting> searchResultPostings, List<Double> accumulatorValues,
+            DocumentCorpus corpus, Scanner sc) {
+        int queryFoundInFilesCount = 0, i = 0;
 
         for (Posting p : searchResultPostings) {
-            queryFoundInFilesCount++;
             Document queryFoundInDocument = corpus.getDocument(p.getDocumentId());
-            System.out.println(queryFoundInDocument.getTitle()
+            System.out.print(queryFoundInDocument.getTitle()
                     + " (FileName: "
                     + ((FileDocument) queryFoundInDocument).getFilePath().getFileName().toString()
                     + ")");
+            if (accumulatorValues != null) {
+                System.out.print("(Accumulator: " + accumulatorValues.get(i) + ")");
+            }
+            System.out.println();
+
+            queryFoundInFilesCount++;
+            i++;
         }
 
         System.out.println("Query found in files: " + queryFoundInFilesCount);
