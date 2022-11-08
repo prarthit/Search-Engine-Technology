@@ -10,21 +10,28 @@ import cecs429.indexing.database.TermPositionCrud;
 import cecs429.indexing.database.TermPositionModel;
 import utils.Utils;
 
-public class DiskIndexWriterCompressed {
+public class DiskIndexWriterEncoded {
     private Index positionalDiskIndex;
     private String diskDirectoryPath;
 
     TermPositionCrud termPositionCrud;
     TermPositionModel termPositionModel;
     
-    public DiskIndexWriterCompressed(Index positionalDiskIndex, String diskDirectoryPath) throws SQLException{
+    private final int MAXIMUM_BATCH_LIMIT = 1000;
+
+    public DiskIndexWriterEncoded(Index positionalDiskIndex, String diskDirectoryPath) throws SQLException{
         this.positionalDiskIndex = positionalDiskIndex;
         this.diskDirectoryPath = diskDirectoryPath;
     }
 
     public void writeIndex() throws SQLException{
         try{
-            termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath));
+            long startTime = System.currentTimeMillis();
+            System.out.println("Compression Disk Indexing...");
+            
+            termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath)
+                    + DiskIndexEnum.POSITIONAL_INDEX.getDbPostingFileName());
+            termPositionCrud.openConnection();
             termPositionCrud.createTable();
 
             termPositionModel = new TermPositionModel();
@@ -34,12 +41,18 @@ public class DiskIndexWriterCompressed {
             raf.seek(0);
 
             List<String> vocab = positionalDiskIndex.getVocabulary();
-            for(String term : vocab){
-                
-                termPositionModel.setTerm(term);
-                termPositionModel.setBytePosition(raf.getChannel().position());
-                termPositionCrud.add(termPositionModel);
+            int vocabCount = 0;
+            int flag = 0;
+            for (String term : vocab) {
 
+                if(vocabCount % MAXIMUM_BATCH_LIMIT == 0){
+                    if(flag == 1)
+                        termPositionCrud.executeInsertBatch();
+                    flag = 1;
+                    termPositionCrud.initializePreparestatement();
+                }else 
+                    termPositionCrud.add(term, raf.getChannel().position());
+                
                 List<Posting> postings = positionalDiskIndex.getPostings(term);
                 byte[] docFreqBytes = vbCode.encodeNumber(postings.size());
                 raf.write(docFreqBytes, 0, docFreqBytes.length);
@@ -66,7 +79,17 @@ public class DiskIndexWriterCompressed {
                     } 
                     lastDocId = docId;
                 }
+                ++vocabCount;
             }
+
+            termPositionCrud.executeInsertBatch();
+            termPositionCrud.sqlCommit();
+
+            long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
+
+            System.out.println("Time taken to write encoded disk positional index: " + ((endTime - startTime) / 1000)
+                    + " seconds");
+                    
             raf.close();
         }catch (IOException ex) {
             ex.printStackTrace();

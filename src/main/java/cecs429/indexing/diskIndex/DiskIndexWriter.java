@@ -17,7 +17,7 @@ public class DiskIndexWriter {
     private Index biwordInvertedIndex;
     private String diskDirectoryPath;
 
-    private final int MAXIMUM_BATCH_LIMIT = 500;
+    private final int MAXIMUM_BATCH_LIMIT = 1000;
 
     TermPositionCrud termPositionCrud;
     TermPositionModel termPositionModel;

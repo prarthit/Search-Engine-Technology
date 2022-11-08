@@ -20,7 +20,7 @@ import utils.Utils;
  * associating terms and the documents
  * that contain them.
  */
-public class DiskPositionalIndex2 implements Index {
+public class DiskPositionalIndexDecoded implements Index {
     // Need to place in the interface 'index' later - verify
     private RandomAccessFile postings;
     private TermPositionCrud termPositionCrud;
@@ -31,12 +31,13 @@ public class DiskPositionalIndex2 implements Index {
      * @param diskDirectoryPath diskDirectoryPath of where disk indexes can be found
      * @throws SQLException
      */
-    public DiskPositionalIndex2(String diskDirectoryPath) throws SQLException {
+    public DiskPositionalIndexDecoded(String diskDirectoryPath) throws SQLException {
         try {
             postings = new RandomAccessFile(
                     new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName()), "r");
                     
-            termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath));
+            termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath) + DiskIndexEnum.POSITIONAL_INDEX.getDbPostingFileName());
+            termPositionCrud.openConnection();
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         }
@@ -52,6 +53,10 @@ public class DiskPositionalIndex2 implements Index {
             List<Posting> docIds = new ArrayList<Posting>();
 
             TermPositionModel termPositionModel = termPositionCrud.getTermPositionModel(term);
+            if (termPositionModel == null) {
+                return docIds;
+            }
+
             long bytePosition = termPositionModel.getBytePosition();
             VariableByteCode vbCode = new VariableByteCode();
              
@@ -61,9 +66,6 @@ public class DiskPositionalIndex2 implements Index {
 
             
             int lastDocId = 0;
-
-            // byte docIdsByteBuffer[] = new byte[4];
-            // byte positionsByteBuffer[] = new byte[4];
 
             for (int i = 0; i < documentFrequency; i++) {
 
@@ -75,8 +77,6 @@ public class DiskPositionalIndex2 implements Index {
 
                 int lastPositionGap = 0;
                 for (int positionIndex = 0; positionIndex < termFrequency; positionIndex++) {
-                    // postings.read(positionsByteBuffer, 0, positionsByteBuffer.length);
-
                     // (current position + last position) <-> position gaps
                     positions[positionIndex] = vbCode.decodeNumber(postings) + lastPositionGap;// ByteBuffer.wrap(positionsByteBuffer).getInt() + lastPositionGap;
                     lastPositionGap = positions[positionIndex];
@@ -85,7 +85,6 @@ public class DiskPositionalIndex2 implements Index {
                 lastDocId = docId;
 
                 Posting Posting = new Posting(docId, Arrays.stream(positions).boxed().collect(Collectors.toList()));
-
                 docIds.add(Posting);
             }
 
@@ -106,6 +105,10 @@ public class DiskPositionalIndex2 implements Index {
             List<Posting> docIds = new ArrayList<Posting>();
 
             TermPositionModel termPositionModel = termPositionCrud.getTermPositionModel(term);
+            if (termPositionModel == null) {
+                return docIds;
+            }
+            
             long bytePosition = termPositionModel.getBytePosition();
             VariableByteCode vbCode = new VariableByteCode();
 
