@@ -176,4 +176,8 @@ public class DirectoryCorpus implements DocumentCorpus {
 		corpus.registerFileDocumentFactory(".txt", TextFileDocument::loadTextFileDocument);
 		return corpus;
 	}
+
+	public String getCorpusPath() {
+		return mDirectoryPath.toAbsolutePath().toString();
+	}
 }

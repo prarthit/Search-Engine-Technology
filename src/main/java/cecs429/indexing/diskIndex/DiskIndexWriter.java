@@ -26,7 +26,7 @@ public class DiskIndexWriter {
 
     public void writeIndex() throws SQLException {
         try {
-            termPositionCrud = new TermPositionCrud(Utils.getChildDirectoryName(diskDirectoryPath));
+            termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath));
             termPositionCrud.createTable();
 
             termPositionModel = new TermPositionModel();
