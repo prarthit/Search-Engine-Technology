@@ -3,13 +3,11 @@ package cecs429.indexing.diskIndex;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
-import cecs429.indexing.database.SQLiteDatabaseConnection;
 import cecs429.indexing.database.TermPositionCrud;
 import cecs429.indexing.database.TermPositionModel;
 import utils.Utils;
@@ -92,11 +90,15 @@ public class DiskIndexWriter {
                 }
                 ++vocabCount;
             }
+            
+            termPositionCrud.executeInsertBatch();
+            termPositionCrud.sqlCommit();
+
             long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
 
             System.out.println("Time taken to write disk positional index: " + ((endTime - startTime) / 1000)
                     + " seconds");
-            termPositionCrud.sqlCommit();
+
             raf.close();
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -149,12 +151,14 @@ public class DiskIndexWriter {
                 }
                 ++vocabCount;
             }
+            
+            termPositionCrud.executeInsertBatch();
+            termPositionCrud.sqlCommit();
 
             long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
 
             System.out.println("Time taken to write disk biword index: " + ((endTime - startTime) / 1000)
                     + " seconds");
-            termPositionCrud.sqlCommit();
     
             raf.close();
         } catch (IOException ex) {

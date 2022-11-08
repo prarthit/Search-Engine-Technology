@@ -35,6 +35,7 @@ public class DiskBiwordIndex implements Index {
                     new File(diskDirectoryPath + DiskIndexEnum.BIWORD_INDEX.getPostingFileName()), "r");
 
             termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath) + DiskIndexEnum.BIWORD_INDEX.getDbPostingFileName());
+            termPositionCrud.openConnection();
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         }
