@@ -15,7 +15,9 @@ import org.junit.jupiter.api.Test;
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
+import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.text.AdvancedTokenProcessor;
+import utils.Utils;
 
 public class TermDocumentIndexerTest {
     private static String newDirectoryPath = "src/test/java/test_docs", fileExtension = ".json"; // Directory name where
@@ -27,17 +29,17 @@ public class TermDocumentIndexerTest {
     public TermDocumentIndexerTest() throws IOException {
         corpus = DirectoryCorpus.loadJsonDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()),
                 fileExtension);
-        index = TermDocumentIndexer.indexCorpus(corpus, processor);
+        index = new PositionalInvertedIndex(corpus, processor);
         processor = new AdvancedTokenProcessor();
     }
 
     // Valid Directory Test
     @Test
     void validDirectory() {
-        assertEquals(true, TermDocumentIndexer.isValidDirectory(newDirectoryPath));
-        assertNotEquals(true, TermDocumentIndexer.isValidDirectory("   src/"));
-        assertNotEquals(true, TermDocumentIndexer.isValidDirectory("src/test_docs"));
-        assertNotEquals(true, TermDocumentIndexer.isValidDirectory("src/test/test_docs"));
+        assertEquals(true, utils.Utils.isValidDirectory(newDirectoryPath));
+        assertNotEquals(true, Utils.isValidDirectory("   src/"));
+        assertNotEquals(true, Utils.isValidDirectory("src/test_docs"));
+        assertNotEquals(true, Utils.isValidDirectory("src/test/test_docs"));
     }
 
     // Generic File Reader Test
@@ -48,7 +50,7 @@ public class TermDocumentIndexerTest {
         System.setOut(new PrintStream(outputStreamCaptor));
 
         String path = new File("src/test/java/test_docs/1.json").getAbsolutePath();
-        TermDocumentIndexer.readFile(path);
+        Utils.readFile(path);
 
         String actual = outputStreamCaptor.toString();
         String expected = """
@@ -82,6 +84,6 @@ public class TermDocumentIndexerTest {
     // Positional Inverted index build test
     @Test
     void validatePositionalInvertedIndex() throws IOException {
-        assertNotNull(TermDocumentIndexer.indexCorpus(corpus, processor));
+        assertNotNull(new PositionalInvertedIndex(corpus, processor));
     }
 }
