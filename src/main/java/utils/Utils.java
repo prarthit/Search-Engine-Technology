@@ -50,7 +50,9 @@ public class Utils {
         return directory;
     }
 
-    public static String getChildDirectoryName(String directoryPath) {
+    // Returns only the directory name from path.
+    // e.g. MyTestDir for the path /Users/john/study/MyTestDir
+    public static String getDirectoryNameFromPath(String directoryPath) {
         return Paths.get(directoryPath).getFileName().toString();
     }
 }

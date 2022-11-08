@@ -10,19 +10,17 @@ import java.util.Properties;
 import java.util.Scanner;
 
 import cecs429.documents.DirectoryCorpus;
-import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
-import cecs429.documents.FileDocument;
-import cecs429.indexing.BiwordInvertedIndex;
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
 import cecs429.indexing.PositionalInvertedIndex;
-import cecs429.indexing.Posting;
 import cecs429.indexing.diskIndex.DiskIndexEnum;
 import cecs429.indexing.diskIndex.DiskIndexWriter;
 import cecs429.indexing.diskIndex.DiskPositionalIndex;
 import cecs429.querying.BooleanQueryParser;
+import cecs429.querying.BooleanQuerySearch;
 import cecs429.querying.QueryComponent;
+import cecs429.querying.RankedQuerySearch;
 import cecs429.text.TokenProcessor;
 import utils.Utils;
 
@@ -62,7 +60,7 @@ public class TermDocumentIndexer {
 
 				String postingsFileName = DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName();
 				File binsDirectory = Utils.createDirectory(prop.getProperty("resources_dir"));
-				String childDirectoryName = Utils.getChildDirectoryName(newDirectoryPath);
+				String childDirectoryName = Utils.getDirectoryNameFromPath(newDirectoryPath);
 
 				String diskDirectoryPath = binsDirectory.getAbsolutePath() + "/" + childDirectoryName;
 				File diskFilePath = new File(diskDirectoryPath + postingsFileName);
@@ -79,62 +77,39 @@ public class TermDocumentIndexer {
 				}
 
 				// Build a k-gram index from the corpus
-				KGramIndex kGramIndex = new KGramIndex(corpus);
+				// KGramIndex kGramIndex = new KGramIndex(corpus);
+				KGramIndex kGramIndex = null;
 				booleanQueryParser.setKGramIndex(kGramIndex);
 
 				// Build a biword index from the corpus
-				Index biwordIndex = new BiwordInvertedIndex(corpus, processor);
+				// Index biwordIndex = new BiwordInvertedIndex(corpus, processor);
+				Index biwordIndex = null;
 				booleanQueryParser.setBiwordIndex(biwordIndex);
 			}
 
 			System.out.print("\nEnter a search query: ");
 			// Get the query from user input
-			String query = sc.nextLine().toLowerCase();
+			String query = sc.nextLine().trim().toLowerCase();
 
 			boolean isSpecialQuery = processSpecialQueries(query, processor, index);
 			if (isSpecialQuery) {
 				if (query.equals(":q"))
 					break;
 			} else {
-				QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
-				findQuery(queryComponent, index, corpus, sc);
+				String query_mode = prop.getProperty("query_mode");
+				if (query_mode.equals("BOOLEAN")) {
+					QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
+					(new BooleanQuerySearch()).findQuery(queryComponent, index, corpus, sc);
+				} else {
+					int k = Integer.parseInt(prop.getProperty("num_results"));
+					(new RankedQuerySearch(k)).findQuery(query, index, corpus, sc);
+				}
 			}
 		}
 
 		sc.close();
 
 		return;
-	}
-
-	private static void findQuery(QueryComponent queryComponent, Index index, DocumentCorpus corpus, Scanner sc) {
-		int queryFoundInFilesCount = 0;
-
-		if (queryComponent != null) {
-			for (Posting p : queryComponent.getPostings(index)) {
-				queryFoundInFilesCount++;
-				Document queryFoundInDocument = corpus.getDocument(p.getDocumentId());
-				System.out.println(queryFoundInDocument.getTitle()
-						+ " (FileName: "
-						+ ((FileDocument) queryFoundInDocument).getFilePath().getFileName().toString()
-						+ ")");
-			}
-
-			System.out.println("Query found in files: " + queryFoundInFilesCount);
-			if (queryFoundInFilesCount > 0) {
-				// Ask the user if they would like to select a document to view
-				System.out.print("Select a document to view (y/n): ");
-				String ch = sc.nextLine().toLowerCase();
-				if (ch.equals("y")) {
-					System.out.print("Enter document name: ");
-					String fileName = sc.nextLine();
-					try {
-						utils.Utils.readFile(newDirectoryPath + "/" + fileName);
-					} catch (IOException e) {
-						System.out.println("Unable to read the document");
-					}
-				}
-			}
-		}
 	}
 
 	public static boolean processSpecialQueries(String query, TokenProcessor processor, Index index) {

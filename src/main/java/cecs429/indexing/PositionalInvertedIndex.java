@@ -7,9 +7,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
+import cecs429.indexing.diskIndex.DocWeightsWriter;
 import cecs429.text.EnglishTokenStream;
 import cecs429.text.TokenProcessor;
 
@@ -76,9 +78,14 @@ public class PositionalInvertedIndex implements Index {
 
 		dict.clear(); // Clear the index and add terms from new corpus
 
+		List<Double> docWeights = new ArrayList<>();
+
 		// Add terms to the inverted index with addPosting.
 		for (Document d : corpus.getDocuments()) {
 			Reader content = d.getContent();
+
+			// Term frequency map for count of term in a document
+			Map<String, Integer> termFreqMap = new HashMap<>();
 
 			// Tokenize the document's content by constructing an EnglishTokenStream around
 			// the document's content.
@@ -94,6 +101,8 @@ public class PositionalInvertedIndex implements Index {
 				int documentId = d.getId();
 				for (String term : terms) {
 					addTerm(term, documentId, position);
+
+					termFreqMap.put(term, termFreqMap.getOrDefault(term, 0) + 1);
 				}
 				position++;
 			}
@@ -109,7 +118,14 @@ public class PositionalInvertedIndex implements Index {
 			} catch (IOException e) {
 				System.err.println("Unable to close english token stream");
 			}
+
+			// Document weight for ranked retrieval
+			double L_d = DocWeightsWriter.calculateDocWeight(termFreqMap);
+			docWeights.add(L_d);
 		}
+
+		// Write the document weights to disk
+		DocWeightsWriter.writeToDisk(docWeights);
 
 		long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
 

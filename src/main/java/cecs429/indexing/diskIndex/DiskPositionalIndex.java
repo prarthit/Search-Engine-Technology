@@ -22,7 +22,6 @@ import utils.Utils;
  * that contain them.
  */
 public class DiskPositionalIndex implements Index {
-    // Need to place in the interface 'index' later - verify
     private RandomAccessFile postings;
     private TermPositionCrud termPositionCrud;
 
@@ -37,7 +36,7 @@ public class DiskPositionalIndex implements Index {
             postings = new RandomAccessFile(
                     new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName()), "r");
 
-            termPositionCrud = new TermPositionCrud(Utils.getChildDirectoryName(diskDirectoryPath));
+            termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath));
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         }
@@ -53,6 +52,10 @@ public class DiskPositionalIndex implements Index {
             List<Posting> docIds = new ArrayList<Posting>();
 
             TermPositionModel termPositionModel = termPositionCrud.getTermPositionModel(term);
+            if (termPositionModel == null) {
+                return docIds;
+            }
+
             long bytePosition = termPositionModel.getBytePosition();
 
             // Using the already-opened postings.bin file, seek to the position of the term
@@ -63,8 +66,7 @@ public class DiskPositionalIndex implements Index {
 
             int documentFrequency = ByteBuffer.wrap(buffer).getInt();
 
-            int docId = 0;
-            int lastDocId = 0;
+            int docId = 0, lastDocId = 0;
 
             byte docIdsByteBuffer[] = new byte[4];
             byte positionsByteBuffer[] = new byte[4];
@@ -95,9 +97,8 @@ public class DiskPositionalIndex implements Index {
 
                 lastDocId = docId;
 
-                Posting Posting = new Posting(docId, Arrays.stream(positions).boxed().collect(Collectors.toList()));
-
-                docIds.add(Posting);
+                Posting p = new Posting(docId, Arrays.stream(positions).boxed().collect(Collectors.toList()));
+                docIds.add(p);
             }
 
             return docIds;
@@ -131,6 +132,7 @@ public class DiskPositionalIndex implements Index {
             int lastDocId = 0;
 
             byte docIdsByteBuffer[] = new byte[4];
+            byte positionsByteBuffer[] = new byte[4];
 
             for (int i = 0; i < documentFrequency; i++) {
 
@@ -143,6 +145,11 @@ public class DiskPositionalIndex implements Index {
 
                 postings.read(buffer, 0, buffer.length);
                 int termFrequency = ByteBuffer.wrap(buffer).getInt();
+
+                // Scan through the positions of the term, as we only care about the docIds
+                for (int positionIndex = 0; positionIndex < termFrequency; positionIndex++) {
+                    postings.read(positionsByteBuffer, 0, positionsByteBuffer.length);
+                }
 
                 lastDocId = docId;
 

@@ -31,3 +31,5 @@
 `query_mode`: Mode of the query
 - *(default)* `BOOLEAN` for running queries in boolean mode(e.g. Phrase query, Near query, AND query, OR query, Basic query etc.)
 - `RANKED` for running queries in ranked mode with bag of words terminology (only supports Basic and Prase queries)
+
+`num_results`: Total number of results to show for ranked query
