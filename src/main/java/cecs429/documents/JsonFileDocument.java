@@ -40,6 +40,11 @@ public class JsonFileDocument implements FileDocument {
 	}
 
 	@Override
+	public long getByteSize() {
+		return mFilePath.toFile().length();
+	}
+
+	@Override
 	public Reader getContent() {
 		JSONParser parser = new JSONParser();
 

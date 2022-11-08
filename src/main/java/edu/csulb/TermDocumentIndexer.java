@@ -11,9 +11,11 @@ import java.util.Scanner;
 
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.DocumentCorpus;
+import cecs429.indexing.BiwordInvertedIndex;
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
 import cecs429.indexing.PositionalInvertedIndex;
+import cecs429.indexing.diskIndex.DiskBiwordIndex;
 import cecs429.indexing.diskIndex.DiskIndexEnum;
 import cecs429.indexing.diskIndex.DiskIndexWriter;
 import cecs429.indexing.diskIndex.DiskIndexWriterCompressed;
@@ -23,6 +25,7 @@ import cecs429.querying.BooleanQueryParser;
 import cecs429.querying.BooleanQuerySearch;
 import cecs429.querying.QueryComponent;
 import cecs429.querying.RankedQuerySearch;
+import cecs429.querying.WildcardLiteral;
 import cecs429.text.TokenProcessor;
 import utils.Utils;
 
@@ -43,6 +46,8 @@ public class TermDocumentIndexer {
 
 		DocumentCorpus corpus = null;
 		Index index = null;
+		Index biwordIndex = null;
+		KGramIndex kGramIndex = null;
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
 
 		// Create basic or advanced token processor based on properties file
@@ -68,27 +73,38 @@ public class TermDocumentIndexer {
 				File diskFilePath = new File(diskDirectoryPath + postingsFileName);
 
 				if (diskFilePath.exists() && diskFilePath.length() > 0) {
+					
+					//Call the corpus get documents to set the hashmap for corpus mDocuments
+					corpus.getDocuments();
 					// Read from the already existed disk index
 					corpus.getDocuments();
 					index = new DiskPositionalIndex2(diskDirectoryPath);
+					index = new DiskPositionalIndex(diskDirectoryPath);
+					biwordIndex = new DiskBiwordIndex(diskDirectoryPath);
+
 				} else {
 					// Index the documents of the directory.
 					index = new PositionalInvertedIndex(corpus, processor);
+					biwordIndex = new BiwordInvertedIndex(corpus, processor);
+					
 					// Build and write the disk index
-					DiskIndexWriterCompressed dWriter = new DiskIndexWriterCompressed(index, diskDirectoryPath);
-					dWriter.writeIndex();
+					// DiskIndexWriterCompressed dWriter = new DiskIndexWriterCompressed(index, diskDirectoryPath);
+					// dWriter.writeIndex();
 					// DiskIndexWriter dWriter = new DiskIndexWriter(index, diskDirectoryPath);
 					// dWriter.writeIndex();
+					DiskIndexWriter dWriter = new DiskIndexWriter();
+					dWriter.setPositionalIndex(index, diskDirectoryPath);
+					dWriter.writeIndex();
+
+					dWriter.setBiwordIndex(biwordIndex, diskDirectoryPath);
+					dWriter.writeBiwordIndex();
 				}
 
 				// Build a k-gram index from the corpus
-				// KGramIndex kGramIndex = new KGramIndex(corpus);
-				KGramIndex kGramIndex = null;
+				kGramIndex = new KGramIndex(corpus);
 				booleanQueryParser.setKGramIndex(kGramIndex);
 
 				// Build a biword index from the corpus
-				// Index biwordIndex = new BiwordInvertedIndex(corpus, processor);
-				Index biwordIndex = null;
 				booleanQueryParser.setBiwordIndex(biwordIndex);
 			}
 
@@ -103,11 +119,16 @@ public class TermDocumentIndexer {
 			} else {
 				String query_mode = prop.getProperty("query_mode");
 				if (query_mode.equals("BOOLEAN")) {
+					corpus.getDocuments();
+
 					QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
 					(new BooleanQuerySearch()).findQuery(queryComponent, index, corpus, sc);
 				} else {
 					int k = Integer.parseInt(prop.getProperty("num_results"));
-					(new RankedQuerySearch(k)).findQuery(query, index, corpus, sc);
+					String ranking_score_scheme = prop.getProperty("ranking_score_scheme");
+					WildcardLiteral wildcardLiteral = new WildcardLiteral("", processor, kGramIndex);
+					(new RankedQuerySearch(k, ranking_score_scheme, wildcardLiteral)).findQuery(query, index, corpus,
+							sc, processor);
 				}
 			}
 		}

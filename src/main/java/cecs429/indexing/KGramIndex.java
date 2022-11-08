@@ -1,13 +1,23 @@
 package cecs429.indexing;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
@@ -31,7 +41,12 @@ public class KGramIndex {
     }
 
     public KGramIndex(DocumentCorpus corpus) {
-        buildIndexFromCorpus(corpus);
+        try {
+            readIndexFromDisk();
+        } catch (FileNotFoundException e) {
+            buildIndexFromCorpus(corpus);
+            writeIndexToDisk();
+        }
     }
 
     public int getK() {
@@ -173,5 +188,68 @@ public class KGramIndex {
         System.out.println(
                 "Time taken to build k-gram index: " + ((endTime - startTime) / 1000)
                         + " seconds");
+    }
+
+    public void writeIndexToDisk() {
+        Properties prop = new Properties();
+        try {
+            prop.load(new FileInputStream("src/config.properties"));
+        } catch (Exception e) {
+            System.err.println("Cannot read config.properties file");
+            e.printStackTrace();
+        }
+        String kGramIndexPath = prop.getProperty("resources_dir") + "/KGramIndex.txt";
+
+        try {
+            File kGramIndexFile = new File(kGramIndexPath);
+            kGramIndexFile.createNewFile();
+        } catch (IOException e) {
+            System.err.println("Unable to create KGramIndex.txt file.");
+            e.printStackTrace();
+        }
+
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(kGramIndexPath))) {
+            for (Map.Entry<String, List<String>> entry : dict.entrySet()) {
+                String kGramTerm = entry.getKey();
+                List<String> wordsContainingKGramTerm = entry.getValue();
+
+                bufferedWriter.write(kGramTerm);
+                bufferedWriter.newLine();
+                for (String word : wordsContainingKGramTerm) {
+                    bufferedWriter.write(word);
+                    bufferedWriter.write(" ");
+                }
+                bufferedWriter.newLine();
+            }
+        } catch (IOException e) {
+            System.err.println("Cannot write K-gram index on disk");
+            e.printStackTrace();
+        }
+    }
+
+    public void readIndexFromDisk() throws FileNotFoundException {
+        Properties prop = new Properties();
+        try {
+            prop.load(new FileInputStream("src/config.properties"));
+        } catch (Exception e) {
+            System.err.println("Cannot read config.properties file");
+            e.printStackTrace();
+        }
+        String kGramIndexPath = prop.getProperty("resources_dir") + "/KGramIndex.txt";
+
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(kGramIndexPath))) {
+            String kGramTerm = bufferedReader.readLine();
+            while (kGramTerm != null) {
+                List<String> wordsContainingKGramTerm = Arrays.asList(bufferedReader.readLine().split(" "));
+
+                dict.put(kGramTerm, wordsContainingKGramTerm);
+                kGramTerm = bufferedReader.readLine();
+            }
+        } catch (FileNotFoundException e) {
+            throw e;
+        } catch (IOException e) {
+            System.err.println("Cannot read K-gram index from disk");
+            e.printStackTrace();
+        }
     }
 }

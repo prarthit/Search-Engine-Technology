@@ -36,7 +36,8 @@ public class DiskPositionalIndex implements Index {
             postings = new RandomAccessFile(
                     new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName()), "r");
 
-            termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath));
+            termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath) + DiskIndexEnum.POSITIONAL_INDEX.getDbPostingFileName());
+            termPositionCrud.openConnection();
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         }
@@ -118,6 +119,10 @@ public class DiskPositionalIndex implements Index {
             List<Posting> docIds = new ArrayList<Posting>();
 
             TermPositionModel termPositionModel = termPositionCrud.getTermPositionModel(term);
+            if (termPositionModel == null) {
+                return docIds;
+            }
+            
             long bytePosition = termPositionModel.getBytePosition();
 
             // Using the already-opened postings.bin file, seek to the position of the term
