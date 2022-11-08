@@ -11,9 +11,11 @@ import java.util.Scanner;
 
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.DocumentCorpus;
+import cecs429.indexing.BiwordInvertedIndex;
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
 import cecs429.indexing.PositionalInvertedIndex;
+import cecs429.indexing.diskIndex.DiskBiwordIndex;
 import cecs429.indexing.diskIndex.DiskIndexEnum;
 import cecs429.indexing.diskIndex.DiskIndexWriter;
 import cecs429.indexing.diskIndex.DiskPositionalIndex;
@@ -69,14 +71,25 @@ public class TermDocumentIndexer {
 				File diskFilePath = new File(diskDirectoryPath + postingsFileName);
 
 				if (diskFilePath.exists() && diskFilePath.length() > 0) {
+					
+					//Call the corpus get documents to set the hashmap for corpus mDocuments
+					corpus.getDocuments();
 					// Read from the already existed disk index
 					index = new DiskPositionalIndex(diskDirectoryPath);
+					biwordIndex = new DiskBiwordIndex(diskDirectoryPath);
+
 				} else {
 					// Index the documents of the directory.
 					index = new PositionalInvertedIndex(corpus, processor);
+					biwordIndex = new BiwordInvertedIndex(corpus, processor);
+					
 					// Build and write the disk index
-					DiskIndexWriter dWriter = new DiskIndexWriter(index, diskDirectoryPath);
+					DiskIndexWriter dWriter = new DiskIndexWriter();
+					dWriter.setPositionalIndex(index, diskDirectoryPath);
 					dWriter.writeIndex();
+
+					dWriter.setBiwordIndex(biwordIndex, diskDirectoryPath);
+					dWriter.writeBiwordIndex();
 				}
 
 				// Build a k-gram index from the corpus
@@ -84,8 +97,6 @@ public class TermDocumentIndexer {
 				booleanQueryParser.setKGramIndex(kGramIndex);
 
 				// Build a biword index from the corpus
-				// Index biwordIndex = new BiwordInvertedIndex(corpus, processor);
-				biwordIndex = null;
 				booleanQueryParser.setBiwordIndex(biwordIndex);
 			}
 
@@ -109,7 +120,7 @@ public class TermDocumentIndexer {
 					String ranking_score_scheme = prop.getProperty("ranking_score_scheme");
 					WildcardLiteral wildcardLiteral = new WildcardLiteral("", processor, kGramIndex);
 					(new RankedQuerySearch(k, ranking_score_scheme, wildcardLiteral)).findQuery(query, index, corpus,
-							sc);
+							sc, processor);
 				}
 			}
 		}

@@ -10,7 +10,13 @@ import java.util.List;
 
 public class TermPositionCrud implements TermPositionDao {
 
-    private static Connection con = SQLiteDatabaseConnection.getConnection();
+    private static Connection con;
+    private static PreparedStatement ps;
+    public void openConnection() throws SQLException {
+        con = SQLiteDatabaseConnection.getConnection();
+        con.setAutoCommit(false);
+    }
+
     private String directoryName;
 
     public TermPositionCrud(String directoryName) {
@@ -33,14 +39,28 @@ public class TermPositionCrud implements TermPositionDao {
     }
 
     @Override
-    public int add(TermPositionModel tpm) throws SQLException {
+    public void add(TermPositionModel tpm) throws SQLException {
         String query = "insert into `" + directoryName + "-TermBytePosition`(term, "
                 + "byte_position) VALUES (?, ?)";
-        PreparedStatement ps = con.prepareStatement(query);
-        ps.setString(1, tpm.getTerm());
-        ps.setLong(2, tpm.getBytePosition());
-        int n = ps.executeUpdate();
-        return n;
+        try{
+            PreparedStatement ps = con.prepareStatement(query);
+            ps.setString(1, tpm.getTerm());
+            ps.setLong(2, tpm.getBytePosition());
+            ps.executeUpdate();
+        }catch(Exception ex){
+            ex.printStackTrace();
+        }
+    }
+
+    @Override
+    public void add(String term, long byte_position) throws SQLException {
+        try{
+            ps.setString(1, term);
+            ps.setLong(2, byte_position);
+            ps.addBatch();
+        }catch(Exception ex){
+            ex.printStackTrace();
+        }
     }
 
     @Override
@@ -74,10 +94,6 @@ public class TermPositionCrud implements TermPositionDao {
         List<String> ls = new ArrayList<>();
 
         while (rs.next()) {
-            // TermPositionModel tpm = new TermPositionModel();
-            // tpm.setId(rs.getInt("id"));
-            // tpm.setTerm();
-            // tpm.setBytePosition(rs.getInt("byte_position"));
             ls.add(rs.getString("term"));
         }
         return ls;
@@ -91,5 +107,30 @@ public class TermPositionCrud implements TermPositionDao {
         ps.setLong(2, tpm.getBytePosition());
         ps.setInt(3, tpm.getId());
         ps.executeUpdate();
+    }
+
+    public void initializePreparestatement() {
+        String query = "insert into `" + directoryName + "-TermBytePosition`(term, "
+                + "byte_position) VALUES (?, ?)";
+        try{
+            ps = null;
+            ps = con.prepareStatement(query);
+        }
+        catch(Exception ex){
+            ex.printStackTrace();
+        }
+    }
+
+    public void executeInsertBatch(){
+        try {
+            ps.executeBatch();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sqlCommit() throws SQLException{
+        con.commit();
+        con.setAutoCommit(true);
     }
 }

@@ -15,6 +15,7 @@ import java.util.Scanner;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
+import cecs429.text.TokenProcessor;
 import cecs429.querying.variantFormulas.DefaultWeightingStrategy;
 import cecs429.querying.variantFormulas.DocWeightParameters;
 import cecs429.querying.variantFormulas.DocWeights;
@@ -87,7 +88,7 @@ public class RankedQuerySearch extends QueryResults {
         }
     }
 
-    public void findQuery(String query, Index index, DocumentCorpus corpus, Scanner sc)
+    public void findQuery(String query, Index index, DocumentCorpus corpus, Scanner sc, TokenProcessor mTokenProcessor)
             throws IOException {
         // Treat the query as bag of words in ranked query mode
         List<String> bagOfWords = new ArrayList<>(Arrays.asList(query.split("\\s+")));
@@ -98,7 +99,8 @@ public class RankedQuerySearch extends QueryResults {
         RandomAccessFile raf = new RandomAccessFile(DocWeightsWriter.getDocWeightFilePath(), "r");
 
         for (String query_term : bagOfWords) {
-            List<Posting> postings = index.getPostingsExcludePositions(query_term);
+            String processedQuery = mTokenProcessor.processQuery(query_term);
+            List<Posting> postings = index.getPostingsExcludePositions(processedQuery);
 
             int N = corpus.getCorpusSize(); // Total number of documents in corpus
             double df_t = postings.size(); // Document frequency of term
