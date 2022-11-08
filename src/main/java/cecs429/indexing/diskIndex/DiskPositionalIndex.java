@@ -14,7 +14,7 @@ import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
 import cecs429.indexing.database.TermPositionCrud;
 import cecs429.indexing.database.TermPositionModel;
-import cecs429.utils.Utils;
+import utils.Utils;
 
 /**
  * A DiskPositionalIndex can retrieve postings for a term from a data structure
@@ -36,7 +36,7 @@ public class DiskPositionalIndex implements Index {
             postings = new RandomAccessFile(
                     new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName()), "r");
 
-            termPositionCrud = new TermPositionCrud(Utils.getChildDirectoryName(diskDirectoryPath) + DiskIndexEnum.POSITIONAL_INDEX.getDbPostingFileName());
+            termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath) + DiskIndexEnum.POSITIONAL_INDEX.getDbPostingFileName());
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         }
@@ -52,7 +52,7 @@ public class DiskPositionalIndex implements Index {
             List<Posting> docIds = new ArrayList<Posting>();
 
             TermPositionModel termPositionModel = termPositionCrud.getTermPositionModel(term);
-            if(termPositionModel == null){
+            if (termPositionModel == null) {
                 return docIds;
             }
 
@@ -97,9 +97,8 @@ public class DiskPositionalIndex implements Index {
 
                 lastDocId = docId;
 
-                Posting Posting = new Posting(docId, Arrays.stream(positions).boxed().collect(Collectors.toList()));
-
-                docIds.add(Posting);
+                Posting p = new Posting(docId, Arrays.stream(positions).boxed().collect(Collectors.toList()));
+                docIds.add(p);
             }
 
             return docIds;

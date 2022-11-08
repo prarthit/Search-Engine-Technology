@@ -13,12 +13,12 @@ import org.junit.jupiter.api.Test;
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
+import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.indexing.PositionalInvertedIndexTest;
 import cecs429.indexing.Posting;
 import cecs429.querying.PhraseLiteral;
 import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.TokenProcessor;
-import edu.csulb.TermDocumentIndexer;
 
 public class PhraseLiteralTest {
     private static String newDirectoryPath = "src/test/java/test_docs", fileExtension = ".json"; // Directory name where
@@ -30,7 +30,7 @@ public class PhraseLiteralTest {
     public PhraseLiteralTest() throws IOException {
         corpus = DirectoryCorpus.loadJsonDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()),
                 fileExtension);
-        index = TermDocumentIndexer.indexCorpus(corpus, tokenProcessor);
+        index = new PositionalInvertedIndex(corpus, tokenProcessor);
     }
 
     @Test

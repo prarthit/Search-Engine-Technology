@@ -6,6 +6,7 @@ import java.util.List;
 
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
+import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.TokenProcessor;
 
 /**
@@ -17,7 +18,7 @@ import cecs429.text.TokenProcessor;
 public class BooleanQueryParser {
 	private KGramIndex kGramIndex; // k-gram index for wildcard literals
 	private Index biwordIndex;
-	private TokenProcessor tokenProcessor;
+	private TokenProcessor tokenProcessor = new AdvancedTokenProcessor();
 
 	/**
 	 * Identifies a portion of a string with a starting index and a length.

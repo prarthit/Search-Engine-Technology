@@ -1,21 +1,34 @@
 package cecs429.indexing;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import cecs429.documents.Document;
+import cecs429.documents.DocumentCorpus;
+import cecs429.indexing.diskIndex.DocWeightsWriter;
+import cecs429.text.EnglishTokenStream;
+import cecs429.text.TokenProcessor;
 
 /**
  * Implements a Positional Inverted Index
  */
 public class PositionalInvertedIndex implements Index {
-	private final HashMap<String, List<Posting>> dict;
+	private final HashMap<String, List<Posting>> dict = new HashMap<>();
 
 	/**
 	 * Constructs an empty positional inverted index
 	 */
 	public PositionalInvertedIndex() {
-		dict = new HashMap<String, List<Posting>>();
+	}
+
+	public PositionalInvertedIndex(DocumentCorpus corpus, TokenProcessor processor) {
+		buildIndexFromCorpus(corpus, processor);
 	}
 
 	/**
@@ -56,5 +69,68 @@ public class PositionalInvertedIndex implements Index {
 		Collections.sort(vocabulary);
 
 		return vocabulary;
+	}
+
+	// Clear the index and build a new index from corpus
+	public void buildIndexFromCorpus(DocumentCorpus corpus, TokenProcessor processor) {
+		long startTime = System.currentTimeMillis(); // Start time to build positional Inverted Index
+		System.out.println("Building positional inverted index...");
+
+		dict.clear(); // Clear the index and add terms from new corpus
+
+		List<Double> docWeights = new ArrayList<>();
+
+		// Add terms to the inverted index with addPosting.
+		for (Document d : corpus.getDocuments()) {
+			Reader content = d.getContent();
+
+			// Term frequency map for count of term in a document
+			Map<String, Integer> termFreqMap = new HashMap<>();
+
+			// Tokenize the document's content by constructing an EnglishTokenStream around
+			// the document's content.
+			EnglishTokenStream englishTokenStream = new EnglishTokenStream(content);
+
+			// Iterate through the tokens in the document, processing them
+			// using a BasicTokenProcessor, and adding them to the
+			// positional inverted index dictionary.
+			Iterator<String> tokens = englishTokenStream.getTokens().iterator();
+			int position = 0; // Position of term in document
+			while (tokens.hasNext()) {
+				List<String> terms = processor.processToken(tokens.next());
+				int documentId = d.getId();
+				for (String term : terms) {
+					addTerm(term, documentId, position);
+
+					termFreqMap.put(term, termFreqMap.getOrDefault(term, 0) + 1);
+				}
+				position++;
+			}
+
+			try {
+				content.close();
+			} catch (IOException e) {
+				System.err.println("Unable to close content reader");
+			}
+
+			try {
+				englishTokenStream.close();
+			} catch (IOException e) {
+				System.err.println("Unable to close english token stream");
+			}
+
+			// Document weight for ranked retrieval
+			double L_d = DocWeightsWriter.calculateDocWeight(termFreqMap);
+			docWeights.add(L_d);
+		}
+
+		// Write the document weights to disk
+		DocWeightsWriter.writeToDisk(docWeights);
+
+		long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
+
+		System.out.println(
+				"Time taken to build positional inverted index: " + ((endTime - startTime) / 1000)
+						+ " seconds");
 	}
 }

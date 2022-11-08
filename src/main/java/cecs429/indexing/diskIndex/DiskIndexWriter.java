@@ -10,7 +10,7 @@ import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
 import cecs429.indexing.database.TermPositionCrud;
 import cecs429.indexing.database.TermPositionModel;
-import cecs429.utils.Utils;
+import utils.Utils;
 
 public class DiskIndexWriter {
     private Index positionalInvertedIndex;
@@ -37,7 +37,7 @@ public class DiskIndexWriter {
         try {
             long startTime = System.currentTimeMillis();
             System.out.println("Disk Indexing...");
-            termPositionCrud = new TermPositionCrud(Utils.getChildDirectoryName(diskDirectoryPath)
+            termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath)
                     + DiskIndexEnum.POSITIONAL_INDEX.getDbPostingFileName());
             termPositionCrud.createTable();
 
@@ -96,7 +96,7 @@ public class DiskIndexWriter {
             System.out.println("Biword Disk Indexing...");
 
             termPositionCrud = new TermPositionCrud(
-                    Utils.getChildDirectoryName(diskDirectoryPath) + DiskIndexEnum.BIWORD_INDEX.getDbPostingFileName());
+                    Utils.getDirectoryNameFromPath(diskDirectoryPath) + DiskIndexEnum.BIWORD_INDEX.getDbPostingFileName());
             termPositionCrud.createTable();
 
             termPositionModel = new TermPositionModel();

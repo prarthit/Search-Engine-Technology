@@ -1,20 +1,37 @@
 package cecs429.indexing;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+
+import cecs429.documents.Document;
+import cecs429.documents.DocumentCorpus;
+import cecs429.text.AdvancedTokenProcessor;
+import cecs429.text.EnglishTokenStream;
 
 // Constructs a k-gram index containing k-grams and
 // words which include those k-grams
 public class KGramIndex {
-    private HashMap<String, List<String>> dict;
+    private HashMap<String, List<String>> dict = new HashMap<>();
     final private int k = 3;
 
+    public KGramIndex() {
+    }
+
     public KGramIndex(List<String> words) {
-        dict = new HashMap<>();
+        dict.clear(); // Clear the index and add terms from words list
         for (String word : words) {
             addTerm(word);
         }
+    }
+
+    public KGramIndex(DocumentCorpus corpus) {
+        buildIndexFromCorpus(corpus);
     }
 
     public int getK() {
@@ -101,5 +118,60 @@ public class KGramIndex {
     // Returns all the k-gram terms
     public List<String> getKGrams() {
         return new ArrayList<>(dict.keySet());
+    }
+
+    // Clear the index and build a new index from corpus
+    public void buildIndexFromCorpus(DocumentCorpus corpus) {
+        long startTime = System.currentTimeMillis(); // Start time to build k-gram index
+        System.out.println("Building k-gram index...");
+
+        HashSet<String> vocabulary = new HashSet<>();
+        AdvancedTokenProcessor processor = new AdvancedTokenProcessor();
+
+        // Add terms to the inverted index with addPosting.
+        for (Document d : corpus.getDocuments()) {
+            Reader content = d.getContent();
+
+            // Tokenize the document's content by constructing an EnglishTokenStream around
+            // the document's content.
+            EnglishTokenStream englishTokenStream = new EnglishTokenStream(content);
+
+            // Iterate through the tokens in the document, processing them
+            // using a BasicTokenProcessor, and adding them to the
+            // positional inverted index dictionary.
+            Iterator<String> tokens = englishTokenStream.getTokens().iterator();
+            while (tokens.hasNext()) {
+                String term = processor.preProcessToken(tokens.next());
+                vocabulary.add(term);
+            }
+
+            try {
+                content.close();
+            } catch (IOException e) {
+                System.err.println("Unable to close content reader");
+            }
+
+            try {
+                englishTokenStream.close();
+            } catch (IOException e) {
+                System.err.println("Unable to close english token stream");
+            }
+        }
+
+        // Sort the vocabulary
+        List<String> vocabulary_list = new ArrayList<String>(vocabulary);
+        Collections.sort(vocabulary_list);
+
+        dict.clear(); // Clear the index and add terms from new corpus
+        for (String word : vocabulary_list) {
+            addTerm(word);
+        }
+
+        long endTime = System.currentTimeMillis(); // End time to build k-gram index
+
+        System.out.println(getKGrams().size() + " distinct kgrams in index");
+        System.out.println(
+                "Time taken to build k-gram index: " + ((endTime - startTime) / 1000)
+                        + " seconds");
     }
 }

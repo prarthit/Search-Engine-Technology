@@ -12,7 +12,7 @@ import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
 import cecs429.indexing.database.TermPositionCrud;
 import cecs429.indexing.database.TermPositionModel;
-import cecs429.utils.Utils;
+import utils.Utils;
 
 /**
  * A DiskBiwordIndex can retrieve postings for a biword term from a data structure
@@ -34,7 +34,7 @@ public class DiskBiwordIndex implements Index {
             postings = new RandomAccessFile(
                     new File(diskDirectoryPath + DiskIndexEnum.BIWORD_INDEX.getPostingFileName()), "r");
 
-            termPositionCrud = new TermPositionCrud(Utils.getChildDirectoryName(diskDirectoryPath) + DiskIndexEnum.BIWORD_INDEX.getDbPostingFileName());
+            termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath) + DiskIndexEnum.BIWORD_INDEX.getDbPostingFileName());
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         }
