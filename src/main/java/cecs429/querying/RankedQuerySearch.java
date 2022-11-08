@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Scanner;
@@ -45,13 +46,15 @@ class Pair implements Comparable<Pair> {
 public class RankedQuerySearch extends QueryResults {
     private int k = 10;
     private VariantFormulaContext variantFormulaContext = new VariantFormulaContext();
+    private WildcardLiteral wildcardLiteral;
 
     public RankedQuerySearch() {
         variantFormulaContext.setVariantStrategy(new DefaultWeightingStrategy());
     };
 
-    public RankedQuerySearch(int k, String ranking_score_scheme) {
+    public RankedQuerySearch(int k, String ranking_score_scheme, WildcardLiteral w) {
         this.k = k;
+        this.wildcardLiteral = w;
 
         VariantStrategy variantStrategy = getVariantStrategy(ranking_score_scheme);
         variantFormulaContext.setVariantStrategy(variantStrategy);
@@ -68,10 +71,27 @@ public class RankedQuerySearch extends QueryResults {
             return new DefaultWeightingStrategy();
     }
 
+    private void preFilterBagOfWords(List<String> bagOfWords) {
+        ListIterator<String> it = bagOfWords.listIterator();
+
+        while (it.hasNext()) {
+            String word = it.next();
+            if (word.contains("*")) {
+                it.remove();
+
+                wildcardLiteral.setTerm(word);
+                for (String newWord : wildcardLiteral.findWordsMatchingWildcard()) {
+                    it.add(newWord);
+                }
+            }
+        }
+    }
+
     public void findQuery(String query, Index index, DocumentCorpus corpus, Scanner sc)
             throws IOException {
         // Treat the query as bag of words in ranked query mode
-        List<String> bagOfWords = Arrays.asList(query.split("\\s+"));
+        List<String> bagOfWords = new ArrayList<>(Arrays.asList(query.split("\\s+")));
+        preFilterBagOfWords(bagOfWords);
 
         Map<Posting, Double> accumulator = new HashMap<>();
 

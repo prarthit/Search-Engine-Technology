@@ -106,7 +106,7 @@ public class WildcardLiteral implements QueryComponent {
     };
 
     // Find all the words matching the wildcard term
-    private List<String> findWordsMatchingWildcard() {
+    public List<String> findWordsMatchingWildcard() {
         String wildCardTerm = mTerm;
 
         // Break the term into largest k-grams possible
@@ -118,6 +118,10 @@ public class WildcardLiteral implements QueryComponent {
         commonWords.removeIf(wordDoesnotMatchWildCard);
 
         return commonWords;
+    }
+
+    public void setTerm(String term) {
+        mTerm = term;
     }
 
     @Override
