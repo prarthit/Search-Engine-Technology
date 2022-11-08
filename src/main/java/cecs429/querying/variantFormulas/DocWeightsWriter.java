@@ -6,6 +6,8 @@ import java.io.RandomAccessFile;
 import java.util.List;
 import java.util.Properties;
 
+import utils.Utils;
+
 public class DocWeightsWriter {
     public static String getDocWeightFilePath() {
         Properties prop = new Properties();
@@ -16,7 +18,7 @@ public class DocWeightsWriter {
             e.printStackTrace();
         }
 
-        String path = prop.getProperty("resources_dir") + "/docWeights.bin";
+        String path = prop.getProperty("resources_dir") + "/" + Utils.getDirectoryNameFromPath(prop.getProperty("corpus_directory_path")) + "_docWeights.bin";
         return path;
     }
 

@@ -17,7 +17,7 @@ public class DiskIndexWriter {
     private Index biwordInvertedIndex;
     private String diskDirectoryPath;
 
-    private final int MAXIMUM_BATCH_LIMIT = 500;
+    private final int MAXIMUM_BATCH_LIMIT = 1000;
 
     TermPositionCrud termPositionCrud;
     TermPositionModel termPositionModel;
@@ -55,14 +55,14 @@ public class DiskIndexWriter {
             int flag = 0;
             for (String term : vocab) {
 
-                if(vocabCount % MAXIMUM_BATCH_LIMIT == 0){
-                    if(flag == 1)
+                if (vocabCount % MAXIMUM_BATCH_LIMIT == 0) {
+                    if (flag == 1)
                         termPositionCrud.executeInsertBatch();
                     flag = 1;
                     termPositionCrud.initializePreparestatement();
-                }else 
+                } else
                     termPositionCrud.add(term, raf.getChannel().position());
-                
+
                 List<Posting> postings = positionalInvertedIndex.getPostings(term);
                 byte[] docFreqterm = ByteBuffer.allocate(4).putInt(postings.size()).array();
                 raf.write(docFreqterm, 0, docFreqterm.length);
@@ -90,7 +90,7 @@ public class DiskIndexWriter {
                 }
                 ++vocabCount;
             }
-            
+
             termPositionCrud.executeInsertBatch();
             termPositionCrud.sqlCommit();
 
@@ -111,8 +111,9 @@ public class DiskIndexWriter {
             System.out.println("Biword Disk Indexing...");
 
             termPositionCrud = new TermPositionCrud(
-                    Utils.getDirectoryNameFromPath(diskDirectoryPath) + DiskIndexEnum.BIWORD_INDEX.getDbPostingFileName());
-            
+                    Utils.getDirectoryNameFromPath(diskDirectoryPath)
+                            + DiskIndexEnum.BIWORD_INDEX.getDbPostingFileName());
+
             termPositionCrud.openConnection();
             termPositionCrud.createTable();
 
@@ -127,12 +128,12 @@ public class DiskIndexWriter {
             int flag = 0;
             for (String term : vocab) {
 
-                if(vocabCount % MAXIMUM_BATCH_LIMIT == 0){
-                    if(flag == 1)
+                if (vocabCount % MAXIMUM_BATCH_LIMIT == 0) {
+                    if (flag == 1)
                         termPositionCrud.executeInsertBatch();
                     flag = 1;
                     termPositionCrud.initializePreparestatement();
-                }else 
+                } else
                     termPositionCrud.add(term, raf.getChannel().position());
 
                 List<Posting> postings = biwordInvertedIndex.getPostings(term);
@@ -151,7 +152,7 @@ public class DiskIndexWriter {
                 }
                 ++vocabCount;
             }
-            
+
             termPositionCrud.executeInsertBatch();
             termPositionCrud.sqlCommit();
 
@@ -159,7 +160,7 @@ public class DiskIndexWriter {
 
             System.out.println("Time taken to write disk biword index: " + ((endTime - startTime) / 1000)
                     + " seconds");
-    
+
             raf.close();
         } catch (IOException ex) {
             ex.printStackTrace();

@@ -39,3 +39,5 @@
 - `wacky` for scoring using Wacky algorithm
 
 `num_results`: Total number of results to show for ranked query
+
+`variable_byte_encoding`: Compression of disk index files(bin)

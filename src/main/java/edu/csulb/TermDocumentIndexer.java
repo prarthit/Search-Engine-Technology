@@ -18,7 +18,9 @@ import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.indexing.diskIndex.DiskBiwordIndex;
 import cecs429.indexing.diskIndex.DiskIndexEnum;
 import cecs429.indexing.diskIndex.DiskIndexWriter;
+import cecs429.indexing.diskIndex.DiskIndexWriterEncoded;
 import cecs429.indexing.diskIndex.DiskPositionalIndex;
+import cecs429.indexing.diskIndex.DiskPositionalIndexDecoded;
 import cecs429.querying.BooleanQueryParser;
 import cecs429.querying.BooleanQuerySearch;
 import cecs429.querying.QueryComponent;
@@ -71,22 +73,32 @@ public class TermDocumentIndexer {
 				File diskFilePath = new File(diskDirectoryPath + postingsFileName);
 
 				if (diskFilePath.exists() && diskFilePath.length() > 0) {
-					
-					//Call the corpus get documents to set the hashmap for corpus mDocuments
+
+					// Call the corpus get documents to set the hashmap for corpus mDocuments
 					corpus.getDocuments();
 					// Read from the already existed disk index
-					index = new DiskPositionalIndex(diskDirectoryPath);
+					if (prop.getProperty("variable_byte_encoding").equals("true")) {
+						index = new DiskPositionalIndexDecoded(diskDirectoryPath);
+					} else {
+						index = new DiskPositionalIndex(diskDirectoryPath);
+					}
 					biwordIndex = new DiskBiwordIndex(diskDirectoryPath);
 
 				} else {
 					// Index the documents of the directory.
 					index = new PositionalInvertedIndex(corpus, processor);
 					biwordIndex = new BiwordInvertedIndex(corpus, processor);
-					
-					// Build and write the disk index
+
 					DiskIndexWriter dWriter = new DiskIndexWriter();
-					dWriter.setPositionalIndex(index, diskDirectoryPath);
-					dWriter.writeIndex();
+					// Build and write the disk index
+					if (prop.getProperty("variable_byte_encoding").equals("true")) {
+						DiskIndexWriterEncoded dWriterCompressed = new DiskIndexWriterEncoded(index,
+								diskDirectoryPath);
+						dWriterCompressed.writeIndex();
+					} else {
+						dWriter.setPositionalIndex(index, diskDirectoryPath);
+						dWriter.writeIndex();
+					}
 
 					dWriter.setBiwordIndex(biwordIndex, diskDirectoryPath);
 					dWriter.writeBiwordIndex();
