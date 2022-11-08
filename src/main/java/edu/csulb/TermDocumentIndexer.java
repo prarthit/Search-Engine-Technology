@@ -16,7 +16,9 @@ import cecs429.indexing.KGramIndex;
 import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.indexing.diskIndex.DiskIndexEnum;
 import cecs429.indexing.diskIndex.DiskIndexWriter;
+import cecs429.indexing.diskIndex.DiskIndexWriterCompressed;
 import cecs429.indexing.diskIndex.DiskPositionalIndex;
+import cecs429.indexing.diskIndex.DiskPositionalIndex2;
 import cecs429.querying.BooleanQueryParser;
 import cecs429.querying.BooleanQuerySearch;
 import cecs429.querying.QueryComponent;
@@ -67,13 +69,16 @@ public class TermDocumentIndexer {
 
 				if (diskFilePath.exists() && diskFilePath.length() > 0) {
 					// Read from the already existed disk index
-					index = new DiskPositionalIndex(diskDirectoryPath);
+					corpus.getDocuments();
+					index = new DiskPositionalIndex2(diskDirectoryPath);
 				} else {
 					// Index the documents of the directory.
 					index = new PositionalInvertedIndex(corpus, processor);
 					// Build and write the disk index
-					DiskIndexWriter dWriter = new DiskIndexWriter(index, diskDirectoryPath);
+					DiskIndexWriterCompressed dWriter = new DiskIndexWriterCompressed(index, diskDirectoryPath);
 					dWriter.writeIndex();
+					// DiskIndexWriter dWriter = new DiskIndexWriter(index, diskDirectoryPath);
+					// dWriter.writeIndex();
 				}
 
 				// Build a k-gram index from the corpus
@@ -135,7 +140,7 @@ public class TermDocumentIndexer {
 			// The query is not a special query
 			return false;
 		}
-
+		
 		return true;
 	}
 }
