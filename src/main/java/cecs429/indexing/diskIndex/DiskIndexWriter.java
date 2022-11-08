@@ -3,11 +3,13 @@ package cecs429.indexing.diskIndex;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
+import cecs429.indexing.database.SQLiteDatabaseConnection;
 import cecs429.indexing.database.TermPositionCrud;
 import cecs429.indexing.database.TermPositionModel;
 import utils.Utils;
@@ -16,6 +18,8 @@ public class DiskIndexWriter {
     private Index positionalInvertedIndex;
     private Index biwordInvertedIndex;
     private String diskDirectoryPath;
+
+    private final int MAXIMUM_BATCH_LIMIT = 500;
 
     TermPositionCrud termPositionCrud;
     TermPositionModel termPositionModel;
@@ -39,6 +43,7 @@ public class DiskIndexWriter {
             System.out.println("Disk Indexing...");
             termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath)
                     + DiskIndexEnum.POSITIONAL_INDEX.getDbPostingFileName());
+            termPositionCrud.openConnection();
             termPositionCrud.createTable();
 
             termPositionModel = new TermPositionModel();
@@ -48,12 +53,18 @@ public class DiskIndexWriter {
             raf.seek(0);
 
             List<String> vocab = positionalInvertedIndex.getVocabulary();
+            int vocabCount = 0;
+            int flag = 0;
             for (String term : vocab) {
 
-                termPositionModel.setTerm(term);
-                termPositionModel.setBytePosition(raf.getChannel().position());
-                termPositionCrud.add(termPositionModel);
-
+                if(vocabCount % MAXIMUM_BATCH_LIMIT == 0){
+                    if(flag == 1)
+                        termPositionCrud.executeInsertBatch();
+                    flag = 1;
+                    termPositionCrud.initializePreparestatement();
+                }else 
+                    termPositionCrud.add(term, raf.getChannel().position());
+                
                 List<Posting> postings = positionalInvertedIndex.getPostings(term);
                 byte[] docFreqterm = ByteBuffer.allocate(4).putInt(postings.size()).array();
                 raf.write(docFreqterm, 0, docFreqterm.length);
@@ -79,11 +90,13 @@ public class DiskIndexWriter {
                     }
                     lastDocId = docId;
                 }
+                ++vocabCount;
             }
             long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
 
             System.out.println("Time taken to write disk positional index: " + ((endTime - startTime) / 1000)
                     + " seconds");
+            termPositionCrud.sqlCommit();
             raf.close();
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -97,6 +110,8 @@ public class DiskIndexWriter {
 
             termPositionCrud = new TermPositionCrud(
                     Utils.getDirectoryNameFromPath(diskDirectoryPath) + DiskIndexEnum.BIWORD_INDEX.getDbPostingFileName());
+            
+            termPositionCrud.openConnection();
             termPositionCrud.createTable();
 
             termPositionModel = new TermPositionModel();
@@ -106,11 +121,17 @@ public class DiskIndexWriter {
             raf.seek(0);
 
             List<String> vocab = biwordInvertedIndex.getVocabulary();
+            int vocabCount = 0;
+            int flag = 0;
             for (String term : vocab) {
 
-                termPositionModel.setTerm(term);
-                termPositionModel.setBytePosition(raf.getChannel().position());
-                termPositionCrud.add(termPositionModel);
+                if(vocabCount % MAXIMUM_BATCH_LIMIT == 0){
+                    if(flag == 1)
+                        termPositionCrud.executeInsertBatch();
+                    flag = 1;
+                    termPositionCrud.initializePreparestatement();
+                }else 
+                    termPositionCrud.add(term, raf.getChannel().position());
 
                 List<Posting> postings = biwordInvertedIndex.getPostings(term);
                 byte[] docFreqterm = ByteBuffer.allocate(4).putInt(postings.size()).array();
@@ -126,12 +147,15 @@ public class DiskIndexWriter {
 
                     lastDocId = docId;
                 }
+                ++vocabCount;
             }
 
             long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
 
             System.out.println("Time taken to write disk biword index: " + ((endTime - startTime) / 1000)
                     + " seconds");
+            termPositionCrud.sqlCommit();
+    
             raf.close();
         } catch (IOException ex) {
             ex.printStackTrace();

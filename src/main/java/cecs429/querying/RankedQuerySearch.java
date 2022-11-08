@@ -14,6 +14,7 @@ import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
 import cecs429.indexing.diskIndex.DocWeightsWriter;
+import cecs429.text.TokenProcessor;
 
 class Pair implements Comparable<Pair> {
     Posting first;
@@ -41,7 +42,7 @@ public class RankedQuerySearch extends QueryResults {
         this.k = k;
     }
 
-    public void findQuery(String query, Index index, DocumentCorpus corpus, Scanner sc)
+    public void findQuery(String query, Index index, DocumentCorpus corpus, Scanner sc, TokenProcessor mTokenProcessor)
             throws IOException {
         // Treat the query as bag of words in ranked query mode
         List<String> bagOfWords = Arrays.asList(query.split("\\s+"));
@@ -49,7 +50,8 @@ public class RankedQuerySearch extends QueryResults {
         Map<Posting, Double> accumulator = new HashMap<>();
 
         for (String query_term : bagOfWords) {
-            List<Posting> postings = index.getPostingsExcludePositions(query_term);
+            String processedQuery = mTokenProcessor.processQuery(query_term);
+            List<Posting> postings = index.getPostingsExcludePositions(processedQuery);
 
             int N = corpus.getCorpusSize(); // Total number of documents in corpus
             double df_t = postings.size(); // Document frequency of term

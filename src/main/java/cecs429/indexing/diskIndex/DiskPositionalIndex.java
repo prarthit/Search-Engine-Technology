@@ -37,6 +37,7 @@ public class DiskPositionalIndex implements Index {
                     new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName()), "r");
 
             termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath) + DiskIndexEnum.POSITIONAL_INDEX.getDbPostingFileName());
+            termPositionCrud.openConnection();
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         }

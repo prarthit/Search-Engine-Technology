@@ -10,7 +10,7 @@ import utils.Utils;
 public class SQLiteDatabaseConnection {
     private static Connection conn = null;
 
-    static {
+    public static Connection getConnection() {
         File dbFileDirectory = Utils.createDirectory("src/main/resources/db");
         String dbFilePath = dbFileDirectory.getAbsolutePath() + "/" + "DiskTermPosition.db";
         String path = "jdbc:sqlite:" + dbFilePath;
@@ -20,9 +20,6 @@ public class SQLiteDatabaseConnection {
         } catch (SQLException | ClassNotFoundException e) {
             System.out.println(e.getMessage());
         }
-    }
-
-    public static Connection getConnection() {
         return conn;
     }
 }
