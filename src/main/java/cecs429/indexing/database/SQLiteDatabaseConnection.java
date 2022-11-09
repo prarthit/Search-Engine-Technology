@@ -11,8 +11,8 @@ public class SQLiteDatabaseConnection {
     private static Connection conn = null;
 
     public static Connection getConnection() {
-        File dbFileDirectory = Utils.createDirectory("src/main/resources/db");
-        String dbFilePath = dbFileDirectory.getAbsolutePath() + "/" + "DiskTermPosition.db";
+        File dbFileDirectory = Utils.createDirectory(Utils.generateFilePathPrefix() + "/db");
+        String dbFilePath = dbFileDirectory.toString() + "/DiskTermPosition.db";
         String path = "jdbc:sqlite:" + dbFilePath;
         try {
             Class.forName("org.sqlite.JDBC");

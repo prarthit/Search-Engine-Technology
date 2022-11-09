@@ -20,6 +20,11 @@ public interface DocumentCorpus {
 	Document getDocument(int id);
 
 	/**
+	 * Returns the name of corpus.
+	 */
+	String getCorpusName();
+
+	/**
 	 * Returns the path of corpus.
 	 */
 	String getCorpusPath();

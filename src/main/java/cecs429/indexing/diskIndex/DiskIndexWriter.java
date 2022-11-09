@@ -10,7 +10,6 @@ import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
 import cecs429.indexing.database.TermPositionCrud;
 import cecs429.indexing.database.TermPositionModel;
-import utils.Utils;
 
 public class DiskIndexWriter {
     private Index positionalInvertedIndex;
@@ -39,15 +38,14 @@ public class DiskIndexWriter {
         try {
             long startTime = System.currentTimeMillis();
             System.out.println("Disk Indexing...");
-            termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath)
-                    + DiskIndexEnum.POSITIONAL_INDEX.getDbPostingFileName());
+            termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX.getDbIndexFileName());
             termPositionCrud.openConnection();
             termPositionCrud.createTable();
 
             termPositionModel = new TermPositionModel();
 
             RandomAccessFile raf = new RandomAccessFile(
-                    diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName(), "rw");
+                    diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getIndexFileName(), "rw");
             raf.seek(0);
 
             List<String> vocab = positionalInvertedIndex.getVocabulary();
@@ -110,9 +108,7 @@ public class DiskIndexWriter {
             long startTime = System.currentTimeMillis();
             System.out.println("Biword Disk Indexing...");
 
-            termPositionCrud = new TermPositionCrud(
-                    Utils.getDirectoryNameFromPath(diskDirectoryPath)
-                            + DiskIndexEnum.BIWORD_INDEX.getDbPostingFileName());
+            termPositionCrud = new TermPositionCrud(DiskIndexEnum.BIWORD_INDEX.getDbIndexFileName());
 
             termPositionCrud.openConnection();
             termPositionCrud.createTable();
@@ -120,7 +116,7 @@ public class DiskIndexWriter {
             termPositionModel = new TermPositionModel();
 
             RandomAccessFile raf = new RandomAccessFile(
-                    diskDirectoryPath + DiskIndexEnum.BIWORD_INDEX.getPostingFileName(), "rw");
+                    diskDirectoryPath + DiskIndexEnum.BIWORD_INDEX.getIndexFileName(), "rw");
             raf.seek(0);
 
             List<String> vocab = biwordInvertedIndex.getVocabulary();

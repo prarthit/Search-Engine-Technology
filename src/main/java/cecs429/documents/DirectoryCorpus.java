@@ -180,4 +180,8 @@ public class DirectoryCorpus implements DocumentCorpus {
 	public String getCorpusPath() {
 		return mDirectoryPath.toAbsolutePath().toString();
 	}
+
+	public String getCorpusName() {
+		return mDirectoryPath.getFileName().toString();
+	}
 }

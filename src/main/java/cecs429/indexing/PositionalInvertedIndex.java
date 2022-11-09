@@ -61,6 +61,11 @@ public class PositionalInvertedIndex implements Index {
 	@Override
 	public List<Posting> getPostingsExcludePositions(String term) {
 		List<Posting> postings = (List<Posting>) dict.getOrDefault(term, new ArrayList<Posting>());
+
+		for (Posting p : postings) {
+			p.setTermFrequency(p.getPositions().size());
+		}
+
 		return postings;
 	}
 
@@ -127,13 +132,13 @@ public class PositionalInvertedIndex implements Index {
 			docWeightsList.add(docWeights);
 		}
 
-		// Write the document weights to disk
-		DocWeightsWriter.writeToDisk(docWeightsList);
-
 		long endTime = System.currentTimeMillis(); // End time to build positional Inverted Index
 
 		System.out.println(
 				"Time taken to build positional inverted index: " + ((endTime - startTime) / 1000)
 						+ " seconds");
+
+		// Write the document weights to disk
+		DocWeightsWriter.writeToDisk(docWeightsList);
 	}
 }

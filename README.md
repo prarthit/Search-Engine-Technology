@@ -40,4 +40,6 @@
 
 `num_results`: Total number of results to show for ranked query
 
-`variable_byte_encoding`: Compression of disk index files(bin)
+`variable_byte_encoding`: Compression algorithm for disk index
+- *(default)* `true`
+- `false`

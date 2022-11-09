@@ -38,6 +38,7 @@ public class TermDocumentIndexer {
 
 		System.out.println("Reading corpus directory path from config.properties file");
 		newDirectoryPath = prop.getProperty("corpus_directory_path");
+
 		Scanner sc = new Scanner(System.in);
 		while (!Utils.isValidDirectory(newDirectoryPath)) {
 			System.out.print("Enter directory path: ");
@@ -64,26 +65,23 @@ public class TermDocumentIndexer {
 				// input directory.
 				corpus = DirectoryCorpus
 						.loadDirectory(Paths.get(new File(newDirectoryPath).getAbsolutePath()));
+				Utils.setCorpusName(corpus.getCorpusName());
 
-				String postingsFileName = DiskIndexEnum.POSITIONAL_INDEX.getPostingFileName();
-				File binsDirectory = Utils.createDirectory(prop.getProperty("resources_dir"));
-				String childDirectoryName = Utils.getDirectoryNameFromPath(newDirectoryPath);
+				String diskDirPath = Utils.generateFilePathPrefix();
+				String positionalIndexFilePath = diskDirPath + DiskIndexEnum.POSITIONAL_INDEX.getIndexFileName();
+				File positionalIndexFile = new File(positionalIndexFilePath);
 
-				String diskDirectoryPath = binsDirectory.getAbsolutePath() + "/" + childDirectoryName;
-				File diskFilePath = new File(diskDirectoryPath + postingsFileName);
-
-				if (diskFilePath.exists() && diskFilePath.length() > 0) {
-
+				if (positionalIndexFile.exists() && positionalIndexFile.length() > 0) {
 					// Call the corpus get documents to set the hashmap for corpus mDocuments
 					corpus.getDocuments();
+
 					// Read from the already existed disk index
 					if (prop.getProperty("variable_byte_encoding").equals("true")) {
-						index = new DiskPositionalIndexDecoded(diskDirectoryPath);
+						index = new DiskPositionalIndexDecoded(diskDirPath);
 					} else {
-						index = new DiskPositionalIndex(diskDirectoryPath);
+						index = new DiskPositionalIndex(diskDirPath);
 					}
-					biwordIndex = new DiskBiwordIndex(diskDirectoryPath);
-
+					biwordIndex = new DiskBiwordIndex(diskDirPath);
 				} else {
 					// Index the documents of the directory.
 					index = new PositionalInvertedIndex(corpus, processor);
@@ -93,14 +91,14 @@ public class TermDocumentIndexer {
 					// Build and write the disk index
 					if (prop.getProperty("variable_byte_encoding").equals("true")) {
 						DiskIndexWriterEncoded dWriterCompressed = new DiskIndexWriterEncoded(index,
-								diskDirectoryPath);
+								diskDirPath);
 						dWriterCompressed.writeIndex();
 					} else {
-						dWriter.setPositionalIndex(index, diskDirectoryPath);
+						dWriter.setPositionalIndex(index, diskDirPath);
 						dWriter.writeIndex();
 					}
 
-					dWriter.setBiwordIndex(biwordIndex, diskDirectoryPath);
+					dWriter.setBiwordIndex(biwordIndex, diskDirPath);
 					dWriter.writeBiwordIndex();
 				}
 
@@ -123,8 +121,6 @@ public class TermDocumentIndexer {
 			} else {
 				String query_mode = prop.getProperty("query_mode");
 				if (query_mode.equals("BOOLEAN")) {
-					corpus.getDocuments();
-
 					QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
 					(new BooleanQuerySearch()).findQuery(queryComponent, index, corpus, sc);
 				} else {

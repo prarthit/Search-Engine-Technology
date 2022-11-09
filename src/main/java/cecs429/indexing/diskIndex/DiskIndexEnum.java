@@ -1,24 +1,24 @@
 package cecs429.indexing.diskIndex;
 
 public enum DiskIndexEnum {
-    POSITIONAL_INDEX("_postings.bin", "_postings"),
-    BIWORD_INDEX("_biwordPostings.bin", "_biwordPostings"),
-    KGRAM_INDEX("_kgramPostings.bin", "_kgramPostings");
+    POSITIONAL_INDEX("/positionalIndex.bin", "positionalIndex"),
+    BIWORD_INDEX("/biwordIndex.bin", "biwordIndex"),
+    KGRAM_INDEX("/kgramIndex.bin", "kgramIndex");
 
-    private String binPostingFileName;
-    private String dbPostingFileName;
+    private String binIndexFileName;
+    private String dbIndexFileName;
 
-    DiskIndexEnum(String binPostingFileName, String dbPostingFileName){
-        this.binPostingFileName = binPostingFileName;
-        this.dbPostingFileName = dbPostingFileName;
+    DiskIndexEnum(String binPostingFileName, String dbPostingFileName) {
+        this.binIndexFileName = binPostingFileName;
+        this.dbIndexFileName = dbPostingFileName;
     }
 
-    public String getPostingFileName(){
-        return this.binPostingFileName;
+    public String getIndexFileName() {
+        return this.binIndexFileName;
     }
 
-    public String getDbPostingFileName(){
-        return this.dbPostingFileName;
+    public String getDbIndexFileName() {
+        return this.dbIndexFileName;
     }
 
 }

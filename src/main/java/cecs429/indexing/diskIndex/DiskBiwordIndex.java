@@ -15,7 +15,8 @@ import cecs429.indexing.database.TermPositionModel;
 import utils.Utils;
 
 /**
- * A DiskBiwordIndex can retrieve postings for a biword term from a data structure
+ * A DiskBiwordIndex can retrieve postings for a biword term from a data
+ * structure
  * associating terms and the documents
  * that contain them.
  */
@@ -32,9 +33,10 @@ public class DiskBiwordIndex implements Index {
     public DiskBiwordIndex(String diskDirectoryPath) throws SQLException {
         try {
             postings = new RandomAccessFile(
-                    new File(diskDirectoryPath + DiskIndexEnum.BIWORD_INDEX.getPostingFileName()), "r");
+                    new File(diskDirectoryPath + DiskIndexEnum.BIWORD_INDEX.getIndexFileName()), "r");
 
-            termPositionCrud = new TermPositionCrud(Utils.getDirectoryNameFromPath(diskDirectoryPath) + DiskIndexEnum.BIWORD_INDEX.getDbPostingFileName());
+            termPositionCrud = new TermPositionCrud(
+                    Utils.generateFilePathPrefix() + "db/" + DiskIndexEnum.BIWORD_INDEX.getDbIndexFileName());
             termPositionCrud.openConnection();
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
@@ -51,7 +53,7 @@ public class DiskBiwordIndex implements Index {
             List<Posting> docIds = new ArrayList<Posting>();
 
             TermPositionModel termPositionModel = termPositionCrud.getTermPositionModel(term);
-            if(termPositionModel == null){
+            if (termPositionModel == null) {
                 return docIds;
             }
             long bytePosition = termPositionModel.getBytePosition();

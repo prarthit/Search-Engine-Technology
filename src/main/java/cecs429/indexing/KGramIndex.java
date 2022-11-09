@@ -3,7 +3,6 @@ package cecs429.indexing;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -17,12 +16,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.EnglishTokenStream;
+import utils.Utils;
 
 // Constructs a k-gram index containing k-grams and
 // words which include those k-grams
@@ -191,20 +190,13 @@ public class KGramIndex {
     }
 
     public void writeIndexToDisk() {
-        Properties prop = new Properties();
-        try {
-            prop.load(new FileInputStream("src/config.properties"));
-        } catch (Exception e) {
-            System.err.println("Cannot read config.properties file");
-            e.printStackTrace();
-        }
-        String kGramIndexPath = prop.getProperty("resources_dir") + "/KGramIndex.txt";
+        String kGramIndexPath = Utils.generateFilePathPrefix() + "/kGramIndex.txt";
 
         try {
             File kGramIndexFile = new File(kGramIndexPath);
             kGramIndexFile.createNewFile();
         } catch (IOException e) {
-            System.err.println("Unable to create KGramIndex.txt file.");
+            System.err.println("Unable to create kGramIndex.txt file.");
             e.printStackTrace();
         }
 
@@ -228,14 +220,7 @@ public class KGramIndex {
     }
 
     public void readIndexFromDisk() throws FileNotFoundException {
-        Properties prop = new Properties();
-        try {
-            prop.load(new FileInputStream("src/config.properties"));
-        } catch (Exception e) {
-            System.err.println("Cannot read config.properties file");
-            e.printStackTrace();
-        }
-        String kGramIndexPath = prop.getProperty("resources_dir") + "/KGramIndex.txt";
+        String kGramIndexPath = Utils.generateFilePathPrefix() + "/kGramIndex.txt";
 
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(kGramIndexPath))) {
             String kGramTerm = bufferedReader.readLine();

@@ -2,16 +2,20 @@ package utils;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Properties;
 
 import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.BasicTokenProcessor;
 import cecs429.text.TokenProcessor;
 
 public class Utils {
+    private static String corpusName = "searchEngine";
+
     // Returns if the given path is valid directory or not
     public static boolean isValidDirectory(String directoryPath) {
         boolean isValidDirectory = Files.isDirectory(Paths.get(directoryPath));
@@ -41,6 +45,7 @@ public class Utils {
         }
     }
 
+    // Check if directory exists at path, if not create directory
     public static File createDirectory(String path) {
         File directory = new File(path);
         if (!directory.exists()) {
@@ -50,9 +55,23 @@ public class Utils {
         return directory;
     }
 
-    // Returns only the directory name from path.
-    // e.g. MyTestDir for the path /Users/john/study/MyTestDir
-    public static String getDirectoryNameFromPath(String directoryPath) {
-        return Paths.get(directoryPath).getFileName().toString();
+    // Returns a file path prefix based on corpus name
+    // for disk index files
+    public static String generateFilePathPrefix() {
+        Properties prop = new Properties();
+        try {
+            prop.load(new FileInputStream("src/config.properties"));
+        } catch (Exception e) {
+            System.err.println("Cannot read config.properties file");
+            e.printStackTrace();
+        }
+
+        String filePathPrefix = prop.getProperty("resources_dir") + "/" + corpusName;
+        return filePathPrefix;
+    }
+
+    public static void setCorpusName(String name) {
+        corpusName = name;
+        createDirectory(generateFilePathPrefix()); // Create directory for corpus if does not exist
     }
 }
