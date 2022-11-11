@@ -29,7 +29,7 @@ public class DiskIndexWriterEncoded {
             long startTime = System.currentTimeMillis();
             System.out.println("Compression Disk Indexing...");
 
-            termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX.getDbIndexFileName());
+            termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX_ENCODED.getDbIndexFileName());
             termPositionCrud.openConnection();
             termPositionCrud.createTable();
 
@@ -37,7 +37,7 @@ public class DiskIndexWriterEncoded {
             VariableByteCode vbCode = new VariableByteCode();
 
             RandomAccessFile raf = new RandomAccessFile(
-                    diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getIndexFileName(), "rw");
+                    diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX_ENCODED.getIndexFileName(), "rw");
             raf.seek(0);
 
             List<String> vocab = positionalDiskIndex.getVocabulary();
