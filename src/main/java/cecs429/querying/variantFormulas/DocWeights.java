@@ -58,8 +58,8 @@ public class DocWeights {
         double sum_of_w_dt = 0;
 
         for (int freq : termFreqMap.values()) {
-            double w_dt = 1 + Math.log10(freq); // Weight of a term in a document
-            sum_of_w_dt = w_dt * w_dt;
+            double w_dt = 1 + Math.log(freq); // Weight of a term in a document
+            sum_of_w_dt += w_dt * w_dt;
         }
 
         // Weight of document

@@ -12,7 +12,7 @@ public class OkapiBM25WeightingStrategy implements VariantStrategy {
         w_dt = 2.2 * docWeightParameters.get_tf_td()
                 / (1.2 * (0.25 + (0.75 * (docWeightParameters.getDocLength() / docWeightParameters.getAvgDocLength())))
                         + docWeightParameters.get_tf_td());
-        L_d = docWeightParameters.getDocWeight();
+        L_d = 1;
 
         ScoreParameters scoreParameters = new ScoreParameters(w_dt, w_qt, L_d);
         return scoreParameters;

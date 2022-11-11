@@ -15,7 +15,6 @@ import java.util.Scanner;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
-import cecs429.text.TokenProcessor;
 import cecs429.querying.variantFormulas.DefaultWeightingStrategy;
 import cecs429.querying.variantFormulas.DocWeightParameters;
 import cecs429.querying.variantFormulas.DocWeights;
@@ -27,12 +26,13 @@ import cecs429.querying.variantFormulas.Tf_idfWeightingStrategy;
 import cecs429.querying.variantFormulas.VariantFormulaContext;
 import cecs429.querying.variantFormulas.VariantStrategy;
 import cecs429.querying.variantFormulas.WackyWeightingStrategy;
+import cecs429.text.TokenProcessor;
 
 class Pair implements Comparable<Pair> {
-    Posting first;
+    int first;
     double second;
 
-    Pair(Posting first, double second) {
+    Pair(int first, double second) {
         this.first = first;
         this.second = second;
     }
@@ -46,6 +46,14 @@ class Pair implements Comparable<Pair> {
 
 public class RankedQuerySearch extends QueryResults {
     private int k = 10;
+    private Map<String, VariantStrategy> variantStrategyMap = new HashMap<String, VariantStrategy>() {
+        {
+            put("default", new DefaultWeightingStrategy());
+            put("tf_idf", new Tf_idfWeightingStrategy());
+            put("okapi", new OkapiBM25WeightingStrategy());
+            put("wacky", new WackyWeightingStrategy());
+        }
+    };
     private VariantFormulaContext variantFormulaContext = new VariantFormulaContext();
     private WildcardLiteral wildcardLiteral;
 
@@ -57,19 +65,9 @@ public class RankedQuerySearch extends QueryResults {
         this.k = k;
         this.wildcardLiteral = w;
 
-        VariantStrategy variantStrategy = getVariantStrategy(ranking_score_scheme);
+        VariantStrategy variantStrategy = variantStrategyMap.getOrDefault(ranking_score_scheme,
+                new DefaultWeightingStrategy());
         variantFormulaContext.setVariantStrategy(variantStrategy);
-    }
-
-    private VariantStrategy getVariantStrategy(String ranking_score_scheme) {
-        if (ranking_score_scheme.equals("tf_idf"))
-            return new Tf_idfWeightingStrategy();
-        else if (ranking_score_scheme.equals("okapi"))
-            return new OkapiBM25WeightingStrategy();
-        else if (ranking_score_scheme.equals("wacky"))
-            return new WackyWeightingStrategy();
-        else
-            return new DefaultWeightingStrategy();
     }
 
     private void preFilterBagOfWords(List<String> bagOfWords) {
@@ -94,7 +92,7 @@ public class RankedQuerySearch extends QueryResults {
         List<String> bagOfWords = new ArrayList<>(Arrays.asList(query.split("\\s+")));
         preFilterBagOfWords(bagOfWords);
 
-        Map<Posting, Double> accumulator = new HashMap<>();
+        Map<Integer, Double> accumulator = new HashMap<>();
 
         RandomAccessFile raf = new RandomAccessFile(DocWeightsWriter.getDocWeightFilePath(), "r");
 
@@ -108,6 +106,7 @@ public class RankedQuerySearch extends QueryResults {
             double avgDocLength = DocWeightsReader.readAvgDocLength(raf);
 
             for (Posting p : postings) {
+                int docId = p.getDocumentId();
                 double tf_td = p.getTermFrequency();
 
                 DocWeights docWeights = DocWeightsReader.readDocWeights(p.getDocumentId(), raf);
@@ -116,37 +115,37 @@ public class RankedQuerySearch extends QueryResults {
                 double w_dt = scoreParameters.get_w_dt();
                 double w_qt = scoreParameters.get_w_qt();
 
-                accumulator.put(p, accumulator.getOrDefault(p, 0.0) + (w_dt * w_qt));
+                accumulator.put(docId, accumulator.getOrDefault(docId, 0.0) + (w_dt * w_qt));
             }
         }
 
         PriorityQueue<Pair> maxHeap = new PriorityQueue<>();
 
-        for (Map.Entry<Posting, Double> entry : accumulator.entrySet()) {
-            Posting p = entry.getKey();
+        for (Map.Entry<Integer, Double> entry : accumulator.entrySet()) {
+            int docId = entry.getKey();
             double a_d = entry.getValue();
 
-            DocWeights docWeights = DocWeightsReader.readDocWeights(p.getDocumentId(), raf);
+            DocWeights docWeights = DocWeightsReader.readDocWeights(docId, raf);
             ScoreParameters scoreParameters = variantFormulaContext
                     .executeVariantStrategy(new DocWeightParameters(2.0, 2.0, 2.0, 2.0, docWeights));
 
             double L_d = scoreParameters.get_L_d();
 
-            maxHeap.add(new Pair(p, a_d / L_d));
+            maxHeap.add(new Pair(docId, a_d / L_d));
         }
         raf.close();
 
         // Retrieve top k ranked results from the heap
-        List<Posting> topKSearchResultPostings = new ArrayList<>();
+        List<Integer> topKSearchResultsDocIds = new ArrayList<>();
         List<Double> topKAccumulatorValues = new ArrayList<>();
         for (int i = 0; i < Math.min(k, maxHeap.size()); i++) {
             Pair top_ith_pair = maxHeap.remove();
-            topKSearchResultPostings.add(top_ith_pair.first);
+            topKSearchResultsDocIds.add(top_ith_pair.first);
 
             DecimalFormat df = new DecimalFormat("#.##");
             topKAccumulatorValues.add(Double.parseDouble(df.format(top_ith_pair.second)));
         }
 
-        displaySearchResults(topKSearchResultPostings, topKAccumulatorValues, corpus, sc);
+        displaySearchResults(topKSearchResultsDocIds, topKAccumulatorValues, corpus, sc);
     }
 }

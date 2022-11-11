@@ -1,5 +1,6 @@
 package cecs429.querying;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -11,8 +12,12 @@ public class BooleanQuerySearch extends QueryResults {
     public void findQuery(QueryComponent queryComponent, Index index, DocumentCorpus corpus, Scanner sc) {
 
         if (queryComponent != null) {
-            List<Posting> searchResultPostings = queryComponent.getPostings(index);
-            displaySearchResults(searchResultPostings, null, corpus, sc);
+            List<Posting> searchResultsPostings = queryComponent.getPostings(index);
+            List<Integer> searchResultsDocIds = new ArrayList<>();
+            for (Posting p : searchResultsPostings) {
+                searchResultsDocIds.add(p.getDocumentId());
+            }
+            displaySearchResults(searchResultsDocIds, null, corpus, sc);
         }
     }
 }

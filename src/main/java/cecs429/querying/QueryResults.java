@@ -7,15 +7,14 @@ import java.util.Scanner;
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.documents.FileDocument;
-import cecs429.indexing.Posting;
 
 public abstract class QueryResults {
-    public void displaySearchResults(List<Posting> searchResultPostings, List<Double> accumulatorValues,
+    public void displaySearchResults(List<Integer> searchResultsDocIds, List<Double> accumulatorValues,
             DocumentCorpus corpus, Scanner sc) {
         int queryFoundInFilesCount = 0, i = 0;
 
-        for (Posting p : searchResultPostings) {
-            Document queryFoundInDocument = corpus.getDocument(p.getDocumentId());
+        for (Integer docId : searchResultsDocIds) {
+            Document queryFoundInDocument = corpus.getDocument(docId);
             System.out.print(queryFoundInDocument.getTitle()
                     + " (FileName: "
                     + ((FileDocument) queryFoundInDocument).getFilePath().getFileName().toString()
