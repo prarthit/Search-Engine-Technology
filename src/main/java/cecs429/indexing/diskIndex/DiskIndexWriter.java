@@ -58,8 +58,9 @@ public class DiskIndexWriter {
                         termPositionCrud.executeInsertBatch();
                     flag = 1;
                     termPositionCrud.initializePreparestatement();
-                } else
-                    termPositionCrud.add(term, raf.getChannel().position());
+                } 
+                
+                termPositionCrud.add(term, raf.getChannel().position());
 
                 List<Posting> postings = positionalInvertedIndex.getPostings(term);
                 byte[] docFreqterm = ByteBuffer.allocate(4).putInt(postings.size()).array();
@@ -129,8 +130,9 @@ public class DiskIndexWriter {
                         termPositionCrud.executeInsertBatch();
                     flag = 1;
                     termPositionCrud.initializePreparestatement();
-                } else
-                    termPositionCrud.add(term, raf.getChannel().position());
+                } 
+                
+                termPositionCrud.add(term, raf.getChannel().position());
 
                 List<Posting> postings = biwordInvertedIndex.getPostings(term);
                 byte[] docFreqterm = ByteBuffer.allocate(4).putInt(postings.size()).array();

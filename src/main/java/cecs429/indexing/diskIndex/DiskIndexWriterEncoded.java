@@ -50,8 +50,9 @@ public class DiskIndexWriterEncoded {
                         termPositionCrud.executeInsertBatch();
                     flag = 1;
                     termPositionCrud.initializePreparestatement();
-                } else
-                    termPositionCrud.add(term, raf.getChannel().position());
+                } 
+                
+                termPositionCrud.add(term, raf.getChannel().position());
 
                 List<Posting> postings = positionalDiskIndex.getPostings(term);
                 byte[] docFreqBytes = vbCode.encodeNumber(postings.size());
