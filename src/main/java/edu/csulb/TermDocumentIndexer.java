@@ -11,14 +11,10 @@ import java.util.Scanner;
 
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.DocumentCorpus;
-import cecs429.indexing.BiwordInvertedIndex;
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
-import cecs429.indexing.PositionalInvertedIndex;
 import cecs429.indexing.diskIndex.DiskBiwordIndex;
-import cecs429.indexing.diskIndex.DiskIndexEnum;
 import cecs429.indexing.diskIndex.DiskIndexWriter;
-import cecs429.indexing.diskIndex.DiskIndexWriterEncoded;
 import cecs429.indexing.diskIndex.DiskPositionalIndex;
 import cecs429.indexing.diskIndex.DiskPositionalIndexDecoded;
 import cecs429.querying.BooleanQueryParser;
@@ -68,44 +64,37 @@ public class TermDocumentIndexer {
 				Utils.setCorpusName(corpus.getCorpusName());
 
 				String diskDirPath = Utils.generateFilePathPrefix();
-				String positionalIndexFilePath = diskDirPath + DiskIndexEnum.POSITIONAL_INDEX.getIndexFileName();
-				File positionalIndexFile = new File(positionalIndexFilePath);
+				corpus.getDocuments();
 
-				if (positionalIndexFile.exists() && positionalIndexFile.length() > 0) {
-					// Call the corpus get documents to set the hashmap for corpus mDocuments
-					corpus.getDocuments();
+				DiskIndexWriter dWriter = new DiskIndexWriter();
 
-					// Read from the already existed disk index
-					if (prop.getProperty("variable_byte_encoding").equals("true")) {
-						index = new DiskPositionalIndexDecoded(diskDirPath);
-					} else {
-						index = new DiskPositionalIndex(diskDirPath);
-					}
-					biwordIndex = new DiskBiwordIndex(diskDirPath);
-				} else {
-					// Index the documents of the directory.
-					index = new PositionalInvertedIndex(corpus, processor);
-					biwordIndex = new BiwordInvertedIndex(corpus, processor);
+				dWriter.setMetrics(diskDirPath, processor, corpus);
+				
+				// Set the batch limit for the insert operation
+				dWriter.setMaximumBatchLimit(Integer.parseInt(prop.getProperty("maximum_batch_size")));
 
-					DiskIndexWriter dWriter = new DiskIndexWriter();
-					// Build and write the disk index for encoded file
-					DiskIndexWriterEncoded dWriterCompressed = new DiskIndexWriterEncoded(index,
-							diskDirPath);
-					dWriterCompressed.writeIndex();
-
-					// Build and write disk index without encoding
-					dWriter.setPositionalIndex(index, diskDirPath);
-					dWriter.writeIndex();
-
-					dWriter.setBiwordIndex(biwordIndex, diskDirPath);
-					dWriter.writeBiwordIndex();
-				}
+				// Write positional Index in disk
+				dWriter.writeIndex();
+				// Write positional encoded Index in disk
+				dWriter.writeIndexEncoded();
+				// Write positional Impact ordering Index in disk
+				dWriter.writeImpactOrderingIndex();
+				// Write biword Index in disk
+				dWriter.writeBiwordIndex();
 
 				// Build a k-gram index from the corpus
 				kGramIndex = new KGramIndex(corpus);
 				booleanQueryParser.setKGramIndex(kGramIndex);
 
+				// Read from the already existed disk index
+				if (prop.getProperty("variable_byte_encoding").equals("true")) {
+					index = new DiskPositionalIndexDecoded(diskDirPath);
+				} else {
+					index = new DiskPositionalIndex(diskDirPath);
+				}
+
 				// Build a biword index from the corpus
+				biwordIndex = new DiskBiwordIndex(diskDirPath);
 				booleanQueryParser.setBiwordIndex(biwordIndex);
 			}
 

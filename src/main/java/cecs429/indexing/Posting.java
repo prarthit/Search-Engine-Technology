@@ -7,10 +7,23 @@ import java.util.List;
 /**
  * A Posting encapulates a document ID associated with a search query component.
  */
-public class Posting {
+public class Posting implements Comparable {
 	private int mDocumentId;
 	private int mTermFrequency;
 	private List<Integer> mPositions; // Positions of term in document
+
+	public int compareTo(Object obj) {
+		Posting mPositions2 = (Posting) obj;
+
+		if (mPositions.size() < mPositions2.getPositions().size()) {
+			return 1;
+		}
+		if (mPositions.size() > mPositions2.getPositions().size()) {
+			return -1;
+		}
+
+		return 0;
+	}
 
 	public Posting(int documentId) {
 		mDocumentId = documentId;

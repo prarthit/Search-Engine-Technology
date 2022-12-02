@@ -74,4 +74,15 @@ public class Utils {
         corpusName = name;
         createDirectory(generateFilePathPrefix()); // Create directory for corpus if does not exist
     }
+
+    public static boolean isFileExist(String fileName){
+        String filePath = generateFilePathPrefix() + fileName;
+
+        File f = new File(filePath);
+        if(f.exists() && !f.isDirectory()) { 
+            return true;
+        }
+
+        return false;
+    }
 }
