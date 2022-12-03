@@ -87,15 +87,14 @@ public class TermDocumentIndexer {
 					biwordIndex = new BiwordInvertedIndex(corpus, processor);
 
 					DiskIndexWriter dWriter = new DiskIndexWriter();
-					// Build and write the disk index
-					if (prop.getProperty("variable_byte_encoding").equals("true")) {
-						DiskIndexWriterEncoded dWriterCompressed = new DiskIndexWriterEncoded(index,
-								diskDirPath);
-						dWriterCompressed.writeIndex();
-					} else {
-						dWriter.setPositionalIndex(index, diskDirPath);
-						dWriter.writeIndex();
-					}
+					// Build and write the disk index for encoded file
+					DiskIndexWriterEncoded dWriterCompressed = new DiskIndexWriterEncoded(index,
+							diskDirPath);
+					dWriterCompressed.writeIndex();
+
+					// Build and write disk index without encoding
+					dWriter.setPositionalIndex(index, diskDirPath);
+					dWriter.writeIndex();
 
 					dWriter.setBiwordIndex(biwordIndex, diskDirPath);
 					dWriter.writeBiwordIndex();

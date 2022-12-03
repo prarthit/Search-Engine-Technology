@@ -33,9 +33,9 @@ public class DiskPositionalIndexDecoded implements Index {
     public DiskPositionalIndexDecoded(String diskDirectoryPath) throws SQLException {
         try {
             postings = new RandomAccessFile(
-                    new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getIndexFileName()), "r");
+                    new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX_ENCODED.getIndexFileName()), "r");
 
-            termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX.getDbIndexFileName());
+            termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX_ENCODED.getDbIndexFileName());
             termPositionCrud.openConnection();
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
