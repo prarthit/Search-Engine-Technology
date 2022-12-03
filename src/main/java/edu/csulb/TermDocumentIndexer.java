@@ -1,7 +1,6 @@
 package edu.csulb;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.SQLException;
@@ -23,9 +22,8 @@ import cecs429.indexing.diskIndex.DiskPositionalIndex;
 import cecs429.indexing.diskIndex.DiskPositionalIndexDecoded;
 import cecs429.querying.BooleanQueryParser;
 import cecs429.querying.BooleanQuerySearch;
-import cecs429.querying.QueryComponent;
+import cecs429.querying.QuerySearch;
 import cecs429.querying.RankedQuerySearch;
-import cecs429.querying.WildcardLiteral;
 import cecs429.text.TokenProcessor;
 import utils.Utils;
 
@@ -33,14 +31,14 @@ public class TermDocumentIndexer {
 	private static String prevDirectoryPath = "", newDirectoryPath = ""; // Directory name where the corpus resides
 
 	public static void main(String[] args) throws IOException, SQLException {
-		Properties prop = new Properties();
-		prop.load(new FileInputStream("src/config.properties"));
+		Properties prop = Utils.getProperties();
 
 		System.out.println("Reading corpus directory path from config.properties file");
 		newDirectoryPath = prop.getProperty("corpus_directory_path");
 
 		Scanner sc = new Scanner(System.in);
 		while (!Utils.isValidDirectory(newDirectoryPath)) {
+			System.out.println("Invalid directory path");
 			System.out.print("Enter directory path: ");
 			newDirectoryPath = sc.nextLine().trim();
 		}
@@ -49,11 +47,12 @@ public class TermDocumentIndexer {
 		Index index = null;
 		Index biwordIndex = null;
 		KGramIndex kGramIndex = null;
-		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
 
 		// Create basic or advanced token processor based on properties file
-		TokenProcessor processor = Utils.getTokenProcessor(prop.getProperty("token_processor"));
-		booleanQueryParser.setTokenProcessor(processor);
+		TokenProcessor processor = EngineStore.getTokenProcessor();
+
+		// Query search engine - either boolean or ranked
+		QuerySearch querySearchEngine = null;
 
 		// Loop for taking search input query
 		while (true) {
@@ -102,12 +101,28 @@ public class TermDocumentIndexer {
 					dWriter.writeBiwordIndex();
 				}
 
+				EngineStore.setIndex(index);
+
 				// Build a k-gram index from the corpus
 				kGramIndex = new KGramIndex(corpus);
-				booleanQueryParser.setKGramIndex(kGramIndex);
+				EngineStore.setkGramIndex(kGramIndex);
 
 				// Build a biword index from the corpus
-				booleanQueryParser.setBiwordIndex(biwordIndex);
+				EngineStore.setBiwordIndex(biwordIndex);
+
+				String query_mode = prop.getProperty("query_mode");
+				if (query_mode.equals("BOOLEAN")) {
+					BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
+					booleanQueryParser.setKGramIndex(EngineStore.getkGramIndex());
+					booleanQueryParser.setBiwordIndex(EngineStore.getBiwordIndex());
+					booleanQueryParser.setTokenProcessor(EngineStore.getTokenProcessor());
+
+					querySearchEngine = new BooleanQuerySearch(booleanQueryParser);
+				} else {
+					int k = Integer.parseInt(prop.getProperty("num_results"));
+					String ranking_score_scheme = prop.getProperty("ranking_score_scheme");
+					querySearchEngine = new RankedQuerySearch(k, ranking_score_scheme, processor);
+				}
 			}
 
 			System.out.print("\nEnter a search query: ");
@@ -119,17 +134,7 @@ public class TermDocumentIndexer {
 				if (query.equals(":q"))
 					break;
 			} else {
-				String query_mode = prop.getProperty("query_mode");
-				if (query_mode.equals("BOOLEAN")) {
-					QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
-					(new BooleanQuerySearch()).findQuery(queryComponent, index, corpus, sc);
-				} else {
-					int k = Integer.parseInt(prop.getProperty("num_results"));
-					String ranking_score_scheme = prop.getProperty("ranking_score_scheme");
-					WildcardLiteral wildcardLiteral = new WildcardLiteral("", processor, kGramIndex);
-					(new RankedQuerySearch(k, ranking_score_scheme, wildcardLiteral)).findQuery(query, index, corpus,
-							sc, processor);
-				}
+				querySearchEngine.findAndDisplayResults(query, index, corpus, sc);
 			}
 		}
 
@@ -149,6 +154,8 @@ public class TermDocumentIndexer {
 
 			if (Utils.isValidDirectory(query)) {
 				newDirectoryPath = query;
+			} else {
+				System.out.println("Invalid directory path");
 			}
 		} else if (query.equals(":vocab")) {
 			List<String> vocabulary = index.getVocabulary();

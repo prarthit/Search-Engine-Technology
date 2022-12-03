@@ -19,8 +19,6 @@ public class Utils {
     // Returns if the given path is valid directory or not
     public static boolean isValidDirectory(String directoryPath) {
         boolean isValidDirectory = Files.isDirectory(Paths.get(directoryPath));
-        if (!isValidDirectory)
-            System.out.println("Invalid directory path");
         return isValidDirectory;
     }
 
@@ -73,5 +71,17 @@ public class Utils {
     public static void setCorpusName(String name) {
         corpusName = name;
         createDirectory(generateFilePathPrefix()); // Create directory for corpus if does not exist
+    }
+
+    public static Properties getProperties() {
+        Properties prop = new Properties();
+        try {
+            prop.load(new FileInputStream("src/config.properties"));
+        } catch (IOException e) {
+            System.err.println("Unable to read properties file");
+            e.printStackTrace();
+        }
+
+        return prop;
     }
 }

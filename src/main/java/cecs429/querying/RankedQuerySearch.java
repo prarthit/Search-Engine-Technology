@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.Scanner;
 
+import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
@@ -27,6 +27,7 @@ import cecs429.querying.variantFormulas.VariantFormulaContext;
 import cecs429.querying.variantFormulas.VariantStrategy;
 import cecs429.querying.variantFormulas.WackyWeightingStrategy;
 import cecs429.text.TokenProcessor;
+import edu.csulb.EngineStore;
 
 class Pair implements Comparable<Pair> {
     int first;
@@ -44,7 +45,7 @@ class Pair implements Comparable<Pair> {
     }
 }
 
-public class RankedQuerySearch extends QueryResults {
+public class RankedQuerySearch extends QuerySearch {
     private int k = 10;
     private Map<String, VariantStrategy> variantStrategyMap = new HashMap<String, VariantStrategy>() {
         {
@@ -55,16 +56,26 @@ public class RankedQuerySearch extends QueryResults {
         }
     };
     private VariantFormulaContext variantFormulaContext = new VariantFormulaContext();
-    private WildcardLiteral wildcardLiteral;
+    private TokenProcessor processor;
 
     public RankedQuerySearch() {
         variantFormulaContext.setVariantStrategy(new DefaultWeightingStrategy());
     };
 
-    public RankedQuerySearch(int k, String ranking_score_scheme, WildcardLiteral w) {
+    public RankedQuerySearch(int k, String ranking_score_scheme, TokenProcessor processor) {
         this.k = k;
-        this.wildcardLiteral = w;
+        this.processor = processor;
 
+        VariantStrategy variantStrategy = variantStrategyMap.getOrDefault(ranking_score_scheme,
+                new DefaultWeightingStrategy());
+        variantFormulaContext.setVariantStrategy(variantStrategy);
+    }
+
+    public void setK(int k) {
+        this.k = k;
+    }
+
+    public void setRankingScoreScheme(String ranking_score_scheme) {
         VariantStrategy variantStrategy = variantStrategyMap.getOrDefault(ranking_score_scheme,
                 new DefaultWeightingStrategy());
         variantFormulaContext.setVariantStrategy(variantStrategy);
@@ -76,9 +87,9 @@ public class RankedQuerySearch extends QueryResults {
         while (it.hasNext()) {
             String word = it.next();
             if (word.contains("*")) {
+                WildcardLiteral wildcardLiteral = new WildcardLiteral(word, processor, EngineStore.getkGramIndex());
                 it.remove();
 
-                wildcardLiteral.setTerm(word);
                 for (String newWord : wildcardLiteral.findWordsMatchingWildcard()) {
                     it.add(newWord);
                 }
@@ -86,66 +97,71 @@ public class RankedQuerySearch extends QueryResults {
         }
     }
 
-    public void findQuery(String query, Index index, DocumentCorpus corpus, Scanner sc, TokenProcessor mTokenProcessor)
-            throws IOException {
+    public List<Result> findQuery(String query, Index index, DocumentCorpus corpus) {
         // Treat the query as bag of words in ranked query mode
         List<String> bagOfWords = new ArrayList<>(Arrays.asList(query.split("\\s+")));
         preFilterBagOfWords(bagOfWords);
 
         Map<Integer, Double> accumulator = new HashMap<>();
 
-        RandomAccessFile raf = new RandomAccessFile(DocWeightsWriter.getDocWeightFilePath(), "r");
+        try (RandomAccessFile raf = new RandomAccessFile(DocWeightsWriter.getDocWeightFilePath(), "r")) {
+            for (String query_term : bagOfWords) {
+                String processedQuery = processor.processQuery(query_term);
+                List<Posting> postings = index.getPostingsExcludePositions(processedQuery);
 
-        for (String query_term : bagOfWords) {
-            String processedQuery = mTokenProcessor.processQuery(query_term);
-            List<Posting> postings = index.getPostingsExcludePositions(processedQuery);
+                int N = corpus.getCorpusSize(); // Total number of documents in corpus
+                double df_t = postings.size(); // Document frequency of term
 
-            int N = corpus.getCorpusSize(); // Total number of documents in corpus
-            double df_t = postings.size(); // Document frequency of term
+                double avgDocLength = DocWeightsReader.readAvgDocLength(raf);
 
-            double avgDocLength = DocWeightsReader.readAvgDocLength(raf);
+                for (Posting p : postings) {
+                    int docId = p.getDocumentId();
+                    double tf_td = p.getTermFrequency();
 
-            for (Posting p : postings) {
-                int docId = p.getDocumentId();
-                double tf_td = p.getTermFrequency();
+                    DocWeights docWeights = DocWeightsReader.readDocWeights(p.getDocumentId(), raf);
+                    ScoreParameters scoreParameters = variantFormulaContext
+                            .executeVariantStrategy(new DocWeightParameters(N, df_t, tf_td, avgDocLength, docWeights));
+                    double w_dt = scoreParameters.get_w_dt();
+                    double w_qt = scoreParameters.get_w_qt();
 
-                DocWeights docWeights = DocWeightsReader.readDocWeights(p.getDocumentId(), raf);
-                ScoreParameters scoreParameters = variantFormulaContext
-                        .executeVariantStrategy(new DocWeightParameters(N, df_t, tf_td, avgDocLength, docWeights));
-                double w_dt = scoreParameters.get_w_dt();
-                double w_qt = scoreParameters.get_w_qt();
-
-                accumulator.put(docId, accumulator.getOrDefault(docId, 0.0) + (w_dt * w_qt));
+                    accumulator.put(docId, accumulator.getOrDefault(docId, 0.0) + (w_dt * w_qt));
+                }
             }
+
+            PriorityQueue<Pair> maxHeap = new PriorityQueue<>();
+
+            for (Map.Entry<Integer, Double> entry : accumulator.entrySet()) {
+                int docId = entry.getKey();
+                double a_d = entry.getValue();
+
+                DocWeights docWeights = DocWeightsReader.readDocWeights(docId, raf);
+                ScoreParameters scoreParameters = variantFormulaContext
+                        .executeVariantStrategy(new DocWeightParameters(2.0, 2.0, 2.0, 2.0, docWeights));
+
+                double L_d = scoreParameters.get_L_d();
+
+                maxHeap.add(new Pair(docId, a_d / L_d));
+            }
+
+            // Retrieve top k ranked results from the heap
+            List<Result> topKSearchResults = new ArrayList<>();
+            for (int i = 0; i < Math.min(k, maxHeap.size()); i++) {
+                Pair top_ith_pair = maxHeap.remove();
+
+                Document document = corpus.getDocument(top_ith_pair.first);
+
+                DecimalFormat df = new DecimalFormat("#.##");
+                Double doc_accumulator = Double.parseDouble(df.format(top_ith_pair.second));
+
+                topKSearchResults.add(new Result(document, doc_accumulator));
+            }
+
+            return topKSearchResults;
+        } catch (NumberFormatException | IOException e) {
+            System.err.println("Unable to read Doc weights file");
+            e.printStackTrace();
         }
 
-        PriorityQueue<Pair> maxHeap = new PriorityQueue<>();
-
-        for (Map.Entry<Integer, Double> entry : accumulator.entrySet()) {
-            int docId = entry.getKey();
-            double a_d = entry.getValue();
-
-            DocWeights docWeights = DocWeightsReader.readDocWeights(docId, raf);
-            ScoreParameters scoreParameters = variantFormulaContext
-                    .executeVariantStrategy(new DocWeightParameters(2.0, 2.0, 2.0, 2.0, docWeights));
-
-            double L_d = scoreParameters.get_L_d();
-
-            maxHeap.add(new Pair(docId, a_d / L_d));
-        }
-        raf.close();
-
-        // Retrieve top k ranked results from the heap
-        List<Integer> topKSearchResultsDocIds = new ArrayList<>();
-        List<Double> topKAccumulatorValues = new ArrayList<>();
-        for (int i = 0; i < Math.min(k, maxHeap.size()); i++) {
-            Pair top_ith_pair = maxHeap.remove();
-            topKSearchResultsDocIds.add(top_ith_pair.first);
-
-            DecimalFormat df = new DecimalFormat("#.##");
-            topKAccumulatorValues.add(Double.parseDouble(df.format(top_ith_pair.second)));
-        }
-
-        displaySearchResults(topKSearchResultsDocIds, topKAccumulatorValues, corpus, sc);
+        return new ArrayList<>();
     }
 }
