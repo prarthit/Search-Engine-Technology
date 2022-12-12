@@ -90,7 +90,7 @@ public class TermDocumentIndexer {
 				if (prop.getProperty("variable_byte_encoding").equals("true")) {
 					index = new DiskPositionalIndexDecoded(diskDirPath);
 				} else {
-					index = new DiskPositionalIndex(diskDirPath);
+					index = new DiskPositionalIndex(diskDirPath, prop);
 				}
 
 				// Build a biword index from the corpus

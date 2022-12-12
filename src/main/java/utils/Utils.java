@@ -7,8 +7,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Properties;
 
+import cecs429.indexing.Posting;
 import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.BasicTokenProcessor;
 import cecs429.text.TokenProcessor;
@@ -75,14 +77,25 @@ public class Utils {
         createDirectory(generateFilePathPrefix()); // Create directory for corpus if does not exist
     }
 
-    public static boolean isFileExist(String fileName){
+    public static boolean isFileExist(String fileName) {
         String filePath = generateFilePathPrefix() + fileName;
 
         File f = new File(filePath);
-        if(f.exists() && !f.isDirectory()) { 
+        if (f.exists() && !f.isDirectory()) {
             return true;
         }
 
         return false;
+    }
+
+    public static boolean isSortedList(List<Posting> postings) {
+        if (postings.size() == 0 || postings.size() == 1)
+            return true;
+
+        for (int i = 1; i < postings.size(); i++) {
+            if (postings.get(i - 1).getDocumentId() > postings.get(i).getDocumentId())
+                return false;
+        }
+        return true;
     }
 }

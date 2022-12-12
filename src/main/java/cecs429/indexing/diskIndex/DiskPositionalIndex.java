@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 import cecs429.indexing.Index;
@@ -30,13 +31,21 @@ public class DiskPositionalIndex implements Index {
      * @param diskDirectoryPath diskDirectoryPath of where disk indexes can be found
      * @throws SQLException
      */
-    public DiskPositionalIndex(String diskDirectoryPath) throws SQLException {
+    public DiskPositionalIndex(String diskDirectoryPath, Properties prop) throws SQLException {
         try {
-            postings = new RandomAccessFile(
-                    new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getIndexFileName()), "r");
+            if (prop.getProperty("impact_ordering").equals("true")) {
+                postings = new RandomAccessFile(
+                        new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX_IMPACT.getIndexFileName()), "r");
+                termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX_IMPACT.getDbIndexFileName());
 
-            termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX.getDbIndexFileName());
+            } else {
+                postings = new RandomAccessFile(
+                        new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getIndexFileName()), "r");
+                termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX.getDbIndexFileName());
+
+            }
             termPositionCrud.openConnection();
+
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         }
