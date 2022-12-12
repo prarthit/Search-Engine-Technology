@@ -58,13 +58,7 @@ public class Utils {
     // Returns a file path prefix based on corpus name
     // for disk index files
     public static String generateFilePathPrefix() {
-        Properties prop = new Properties();
-        try {
-            prop.load(new FileInputStream("src/config.properties"));
-        } catch (Exception e) {
-            System.err.println("Cannot read config.properties file");
-            e.printStackTrace();
-        }
+        Properties prop = getProperties();
 
         String filePathPrefix = prop.getProperty("resources_dir") + "/" + corpusName;
         return filePathPrefix;
@@ -96,7 +90,7 @@ public class Utils {
         }
         return true;
     }
-    
+
     public static Properties getProperties() {
         Properties prop = new Properties();
         try {
