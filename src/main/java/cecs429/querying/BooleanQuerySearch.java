@@ -2,22 +2,31 @@ package cecs429.querying;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
+import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
 
-public class BooleanQuerySearch extends QueryResults {
-    public void findQuery(QueryComponent queryComponent, Index index, DocumentCorpus corpus, Scanner sc) {
+public class BooleanQuerySearch extends QuerySearch {
+    private BooleanQueryParser booleanQueryParser;
 
+    public BooleanQuerySearch(BooleanQueryParser booleanQueryParser) {
+        this.booleanQueryParser = booleanQueryParser;
+    }
+
+    public List<Result> findQuery(String query, Index index, DocumentCorpus corpus) {
+        QueryComponent queryComponent = booleanQueryParser.parseQuery(query);
         if (queryComponent != null) {
             List<Posting> searchResultsPostings = queryComponent.getPostings(index);
-            List<Integer> searchResultsDocIds = new ArrayList<>();
+            List<Result> searchResults = new ArrayList<>();
             for (Posting p : searchResultsPostings) {
-                searchResultsDocIds.add(p.getDocumentId());
+                Document document = corpus.getDocument(p.getDocumentId());
+                searchResults.add(new Result(document));
             }
-            displaySearchResults(searchResultsDocIds, null, corpus, sc);
+            return searchResults;
         }
+
+        return new ArrayList<>();
     }
 }
