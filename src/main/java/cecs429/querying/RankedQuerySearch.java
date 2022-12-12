@@ -148,4 +148,83 @@ public class RankedQuerySearch extends QueryResults {
 
         displaySearchResults(topKSearchResultsDocIds, topKAccumulatorValues, corpus, sc);
     }
+
+    public void findQueryImpactOrder(String query, Index index, DocumentCorpus corpus, Scanner sc,
+            TokenProcessor mTokenProcessor)
+            throws IOException {
+        // Treat the query as bag of words in ranked query mode
+        List<String> bagOfWords = new ArrayList<>(Arrays.asList(query.split("\\s+")));
+        preFilterBagOfWords(bagOfWords);
+
+        Map<Integer, Double> accumulator = new HashMap<>();
+
+        RandomAccessFile raf = new RandomAccessFile(DocWeightsWriter.getDocWeightFilePath(), "r");
+
+        for (String query_term : bagOfWords) {
+            String processedQuery = mTokenProcessor.processQuery(query_term);
+            List<Posting> postings = index.getPostingsExcludePositions(processedQuery);
+
+            int N = corpus.getCorpusSize(); // Total number of documents in corpus
+            double df_t = postings.size(); // Document frequency of term
+
+            double avgDocLength = DocWeightsReader.readAvgDocLength(raf);
+
+            int impactThresholdValue = 0;
+
+            for (Posting p : postings) {
+                impactThresholdValue += p.getTermFrequency();
+            }
+            impactThresholdValue /= postings.size();
+
+            for (Posting p : postings) {
+                if (impactThresholdValue >= p.getTermFrequency()) {
+                    break;
+                }
+                int docId = p.getDocumentId();
+                double tf_td = p.getTermFrequency();
+
+                DocWeights docWeights = DocWeightsReader.readDocWeights(p.getDocumentId(), raf);
+                ScoreParameters scoreParameters = variantFormulaContext
+                        .executeVariantStrategy(new DocWeightParameters(N, df_t, tf_td, avgDocLength, docWeights));
+                double w_dt = scoreParameters.get_w_dt();
+                double w_qt = scoreParameters.get_w_qt();
+
+                accumulator.put(docId, accumulator.getOrDefault(docId, 0.0) + (w_dt * w_qt));
+            }
+        }
+
+        PriorityQueue<Pair> maxHeap = new PriorityQueue<>();
+        int totalNonZeroAccumulators = 0;
+
+        for (Map.Entry<Integer, Double> entry : accumulator.entrySet()) {
+            int docId = entry.getKey();
+            double a_d = entry.getValue();
+            
+            if(a_d > 0){
+                ++totalNonZeroAccumulators;
+            }
+
+            DocWeights docWeights = DocWeightsReader.readDocWeights(docId, raf);
+            ScoreParameters scoreParameters = variantFormulaContext
+                    .executeVariantStrategy(new DocWeightParameters(2.0, 2.0, 2.0, 2.0, docWeights));
+
+            double L_d = scoreParameters.get_L_d();
+
+            maxHeap.add(new Pair(docId, a_d / L_d));
+        }
+        raf.close();
+
+        // Retrieve top k ranked results from the heap
+        List<Integer> topKSearchResultsDocIds = new ArrayList<>();
+        List<Double> topKAccumulatorValues = new ArrayList<>();
+        for (int i = 0; i < Math.min(k, maxHeap.size()); i++) {
+            Pair top_ith_pair = maxHeap.remove();
+            topKSearchResultsDocIds.add(top_ith_pair.first);
+
+            DecimalFormat df = new DecimalFormat("#.##");
+            topKAccumulatorValues.add(Double.parseDouble(df.format(top_ith_pair.second)));
+        }
+
+        displaySearchResults(topKSearchResultsDocIds, topKAccumulatorValues, corpus, sc);
+    }
 }
