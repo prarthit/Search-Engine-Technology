@@ -9,13 +9,12 @@ import cecs429.querying.variantFormulas.DocWeights;
 import cecs429.querying.variantFormulas.DocWeightsReader;
 import cecs429.querying.variantFormulas.ScoreParameters;
 import cecs429.querying.variantFormulas.VariantFormulaContext;
-import cecs429.text.TokenProcessor;
 
 public class VocabularyEliminationSearchEngine extends RankedQuerySearch {
     private float wqtThreshhold;
 
-    public VocabularyEliminationSearchEngine(int k, String ranking_score_scheme, TokenProcessor processor, float wqtThreshhold) {
-        super(k, ranking_score_scheme, processor);
+    public VocabularyEliminationSearchEngine(float wqtThreshhold) {
+        super();
         this.wqtThreshhold = wqtThreshhold;
     }
 
