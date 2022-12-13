@@ -164,4 +164,24 @@ public class RankedQuerySearch extends QuerySearch {
 
         return new ArrayList<>();
     }
+    
+    protected void computeAccumulator(List<Posting> postings, RandomAccessFile raf,
+            VariantFormulaContext variantFormulaContext2, int N, double avgDocLength,
+            Map<Integer, Double> accumulator, int impactThresholdValue) {
+
+        double df_t = postings.size(); // Document frequency of term
+
+        for (Posting p : postings) {
+            int docId = p.getDocumentId();
+            double tf_td = p.getTermFrequency();
+
+            DocWeights docWeights = DocWeightsReader.readDocWeights(p.getDocumentId(), raf);
+            ScoreParameters scoreParameters = variantFormulaContext
+                    .executeVariantStrategy(new DocWeightParameters(N, df_t, tf_td, avgDocLength, docWeights));
+            double w_dt = scoreParameters.get_w_dt();
+            double w_qt = scoreParameters.get_w_qt();
+
+            accumulator.put(docId, accumulator.getOrDefault(docId, 0.0) + (w_dt * w_qt));
+        }
+    }
 }
