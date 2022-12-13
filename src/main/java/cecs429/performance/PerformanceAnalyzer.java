@@ -3,6 +3,7 @@ package cecs429.performance;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
@@ -11,6 +12,7 @@ import java.util.Set;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
 import cecs429.querying.RankedQuerySearch;
+import cecs429.querying.VocabularyEliminationSearchEngine;
 import utils.Utils;
 
 public class PerformanceAnalyzer {
@@ -66,13 +68,14 @@ public class PerformanceAnalyzer {
 
     public void analyzeRankingFormulas(Index index, DocumentCorpus corpus) {
         RankedQuerySearch rankedQuerySearchEngine = new RankedQuerySearch();
-        List<String> rankingScoreSchemeNames = rankedQuerySearchEngine.getRankingScoreSchemeNames();
         rankedQuerySearchEngine.setK(50);
-
+        List<Float> wqtList = Arrays.asList(1.0f,1.1f,1.2f,1.3f,1.4f,1.5f,1.7f,1.9f,2.1f,2.3f,2.5f); 
         List<StatisticScores> statisticScores = new ArrayList<>();
+        
+        for(float wqt : wqtList){
+            VocabularyEliminationSearchEngine vocabEliminationSearchEngine = new VocabularyEliminationSearchEngine(wqt);
 
-        PerformanceEvaluator performanceEvaluator = new PerformanceEvaluator(index, corpus, rankedQuerySearchEngine);
-        for (String rankingScoreSchemeName : rankingScoreSchemeNames) {
+            PerformanceEvaluator performanceEvaluator = new PerformanceEvaluator(index, corpus, vocabEliminationSearchEngine);
             double meanAvgPrecision = performanceEvaluator.getMeanAvgPrecision(queries, relevantDocNums);
 
             String firstQuery = queries.get(0);
@@ -80,10 +83,9 @@ public class PerformanceAnalyzer {
             double throughput = performanceEvaluator.getThroughput(firstQuery);
 
             statisticScores
-                    .add(new StatisticScores(rankingScoreSchemeName, meanAvgPrecision, meanResponseTime, throughput));
-
-            // plot PR curve for first query
+                    .add(new StatisticScores("default", meanAvgPrecision, meanResponseTime, throughput));
         }
+            // plot PR curve for first query
     }
 
     public void analyzeQuery(String query, String rankingMethod) {
