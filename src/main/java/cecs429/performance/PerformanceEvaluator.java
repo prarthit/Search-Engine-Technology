@@ -10,9 +10,9 @@ import cecs429.querying.QuerySearch;
 import cecs429.querying.Result;
 
 public class PerformanceEvaluator {
-    Index index;
-    DocumentCorpus corpus;
-    QuerySearch querySearchEngine;
+    private Index index;
+    private DocumentCorpus corpus;
+    private QuerySearch querySearchEngine;
 
     public PerformanceEvaluator(Index index, DocumentCorpus corpus, QuerySearch querySearchEngine) {
         this.index = index;
@@ -68,15 +68,15 @@ public class PerformanceEvaluator {
 
     public double getMeanResponseTime(String query) {
         double totalTime = 0;
-        int iterations = 30;
+        int iterations = 1;
 
-        // Run findQuery for 30 iterations and take the average of the response time
+        // Run findQuery for num of iterations and take the average of the response time
         for (int i = 1; i <= iterations; i++) {
             long startTime = System.currentTimeMillis(); // Start time to find results for the query
             querySearchEngine.findQuery(query, index, corpus);
             long endTime = System.currentTimeMillis(); // End time to find results for the query
 
-            double timeTakenToFindResults = (endTime - startTime) / 1000;
+            double timeTakenToFindResults = (endTime - startTime);
             totalTime += timeTakenToFindResults;
         }
 
@@ -84,6 +84,10 @@ public class PerformanceEvaluator {
     }
 
     public double getThroughput(String query) {
-        return 1 / getMeanResponseTime(query);
+        return getThroughput(getMeanResponseTime(query));
+    }
+
+    public double getThroughput(double mrt) {
+        return 1000 / mrt;
     }
 }

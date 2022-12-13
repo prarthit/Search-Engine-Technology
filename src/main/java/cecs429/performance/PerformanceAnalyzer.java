@@ -11,6 +11,7 @@ import java.util.Set;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
 import cecs429.querying.RankedQuerySearch;
+import de.vandermeer.asciitable.AsciiTable;
 import utils.Utils;
 
 public class PerformanceAnalyzer {
@@ -51,7 +52,7 @@ public class PerformanceAnalyzer {
     private List<Set<Integer>> parseRelevantDocNums() {
         List<Set<Integer>> relevantDocNums = new ArrayList<>();
         String corpusDir = Utils.getProperties().getProperty("corpus_directory_path");
-        try (Scanner sc = new Scanner(new File(corpusDir + "/relevance/rel"))) {
+        try (Scanner sc = new Scanner(new File(corpusDir + "/relevance/qrel"))) {
             while (sc.hasNextLine()) {
                 String relevantDocNumsStr = sc.nextLine();
                 relevantDocNums.add(parseRelevantDocNumsStr(relevantDocNumsStr));
@@ -69,21 +70,35 @@ public class PerformanceAnalyzer {
         List<String> rankingScoreSchemeNames = rankedQuerySearchEngine.getRankingScoreSchemeNames();
         rankedQuerySearchEngine.setK(50);
 
-        List<StatisticScores> statisticScores = new ArrayList<>();
+        List<StatisticScores> statisticScoresForRankingSchemes = new ArrayList<>();
 
         PerformanceEvaluator performanceEvaluator = new PerformanceEvaluator(index, corpus, rankedQuerySearchEngine);
         for (String rankingScoreSchemeName : rankingScoreSchemeNames) {
+            rankedQuerySearchEngine.setRankingScoreScheme(rankingScoreSchemeName);
+
             double meanAvgPrecision = performanceEvaluator.getMeanAvgPrecision(queries, relevantDocNums);
 
             String firstQuery = queries.get(0);
             double meanResponseTime = performanceEvaluator.getMeanResponseTime(firstQuery);
-            double throughput = performanceEvaluator.getThroughput(firstQuery);
+            double throughput = performanceEvaluator.getThroughput(meanResponseTime);
 
-            statisticScores
+            statisticScoresForRankingSchemes
                     .add(new StatisticScores(rankingScoreSchemeName, meanAvgPrecision, meanResponseTime, throughput));
 
             // plot PR curve for first query
         }
+
+        AsciiTable at = new AsciiTable();
+        at.addRule();
+        at.addRow(StatisticScores.getHeader());
+        for (StatisticScores statisticScores : statisticScoresForRankingSchemes) {
+            at.addRule();
+            at.addRow(statisticScores.getContent());
+        }
+        at.addRule();
+
+        String rend = at.render();
+        System.out.println(rend);
     }
 
     public void analyzeQuery(String query, String rankingMethod) {
