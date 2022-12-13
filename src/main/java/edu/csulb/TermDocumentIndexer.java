@@ -16,6 +16,7 @@ import cecs429.indexing.diskIndex.DiskBiwordIndex;
 import cecs429.indexing.diskIndex.DiskIndexWriter;
 import cecs429.indexing.diskIndex.DiskPositionalIndex;
 import cecs429.indexing.diskIndex.DiskPositionalIndexDecoded;
+import cecs429.indexing.diskIndex.DiskPositionalIndexImpactOrdering;
 import cecs429.performance.PerformanceAnalyzer;
 import cecs429.querying.BooleanQueryParser;
 import cecs429.querying.BooleanQuerySearch;
@@ -43,6 +44,7 @@ public class TermDocumentIndexer {
 		DocumentCorpus corpus = null;
 		Index index = null;
 		Index biwordIndex = null;
+		Index impactIndex = null;
 		KGramIndex kGramIndex = null;
 
 		// Create basic or advanced token processor based on properties file
@@ -90,8 +92,11 @@ public class TermDocumentIndexer {
 				if (prop.getProperty("variable_byte_encoding").equals("true")) {
 					index = new DiskPositionalIndexDecoded(diskDirPath);
 				} else {
-					index = new DiskPositionalIndex(diskDirPath, prop);
+					index = new DiskPositionalIndex(diskDirPath);
 				}
+
+				impactIndex = new DiskPositionalIndexImpactOrdering(diskDirPath);
+				EngineStore.setImpactIndex(impactIndex);
 
 				EngineStore.setIndex(index);
 				// Build a biword index from the corpus
@@ -106,6 +111,13 @@ public class TermDocumentIndexer {
 					booleanQueryParser.setTokenProcessor(EngineStore.getTokenProcessor());
 
 					querySearchEngine = new BooleanQuerySearch(booleanQueryParser);
+
+					if (Utils.isValidDirectory(newDirectoryPath + "/relevance")) {
+						PerformanceAnalyzer performanceAnalyzer = new PerformanceAnalyzer();
+
+						performanceAnalyzer.analyzeImpactOrderingBooleanQueries(index, impactIndex, corpus);
+						performanceAnalyzer.analyzeImpactOrdering(index, impactIndex, corpus);
+					}
 				} else {
 					int k = Integer.parseInt(prop.getProperty("num_results"));
 					String ranking_score_scheme = prop.getProperty("ranking_score_scheme");

@@ -20,7 +20,7 @@ import cecs429.indexing.database.TermPositionModel;
  * associating terms and the documents
  * that contain them.
  */
-public class DiskPositionalIndex implements Index {
+public class DiskPositionalIndexImpactOrdering implements Index {
     private RandomAccessFile postings;
     private TermPositionCrud termPositionCrud;
 
@@ -30,12 +30,11 @@ public class DiskPositionalIndex implements Index {
      * @param diskDirectoryPath diskDirectoryPath of where disk indexes can be found
      * @throws SQLException
      */
-    public DiskPositionalIndex(String diskDirectoryPath) throws SQLException {
+    public DiskPositionalIndexImpactOrdering(String diskDirectoryPath) throws SQLException {
         try {
-
             postings = new RandomAccessFile(
-                    new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getIndexFileName()), "r");
-            termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX.getDbIndexFileName());
+                    new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX_IMPACT.getIndexFileName()), "r");
+            termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX_IMPACT.getDbIndexFileName());
 
             termPositionCrud.openConnection();
 

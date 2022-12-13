@@ -10,7 +10,11 @@ import java.util.Set;
 
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
+import cecs429.querying.BooleanQueryParser;
+import cecs429.querying.BooleanQuerySearch;
+import cecs429.querying.ImpactOrderingSearch;
 import cecs429.querying.RankedQuerySearch;
+import edu.csulb.EngineStore;
 import utils.Utils;
 
 public class PerformanceAnalyzer {
@@ -51,7 +55,7 @@ public class PerformanceAnalyzer {
     private List<Set<Integer>> parseRelevantDocNums() {
         List<Set<Integer>> relevantDocNums = new ArrayList<>();
         String corpusDir = Utils.getProperties().getProperty("corpus_directory_path");
-        try (Scanner sc = new Scanner(new File(corpusDir + "/relevance/rel"))) {
+        try (Scanner sc = new Scanner(new File(corpusDir + "/relevance/qrel"))) {
             while (sc.hasNextLine()) {
                 String relevantDocNumsStr = sc.nextLine();
                 relevantDocNums.add(parseRelevantDocNumsStr(relevantDocNumsStr));
@@ -92,5 +96,85 @@ public class PerformanceAnalyzer {
         // avg precision
 
         // throughput for this query
+    }
+
+    public void analyzeImpactOrdering(Index index, Index impactIndex, DocumentCorpus corpus) {
+        ImpactOrderingSearch impactOrderingSearchEngine = new ImpactOrderingSearch();
+        RankedQuerySearch rankedQuerySearchEngineBaseline = new RankedQuerySearch();
+
+        // List<String> rankingScoreSchemeNames =
+        // impactOrderingSearchEngine.getRankingScoreSchemeNames();
+        impactOrderingSearchEngine.setK(50);
+
+        List<StatisticScores> statisticScores = new ArrayList<>();
+
+        PerformanceEvaluator performanceEvaluatorImpact = new PerformanceEvaluator(impactIndex, corpus,
+                impactOrderingSearchEngine);
+        PerformanceEvaluator performanceEvaluatorBaseline = new PerformanceEvaluator(index, corpus,
+                rankedQuerySearchEngineBaseline);
+
+        double meanAvgPrecision = performanceEvaluatorImpact.getMeanAvgPrecision(queries, relevantDocNums);
+        String firstQuery = queries.get(0);
+        double meanResponseTime = performanceEvaluatorImpact.getMeanResponseTime(firstQuery);
+        double throughput = performanceEvaluatorImpact.getThroughput(firstQuery);
+        int accumulator = performanceEvaluatorBaseline.getTotalNonZeroAccumulator();
+
+        double meanAvgPrecisionBaseline = performanceEvaluatorBaseline.getMeanAvgPrecision(queries, relevantDocNums);
+        String firstQueryBaseline = queries.get(0);
+        double meanResponseTimeBaseline = performanceEvaluatorBaseline.getMeanResponseTime(firstQuery);
+        double throughputBaseline = performanceEvaluatorBaseline.getThroughput(firstQueryBaseline);
+        int accumulatorBaseline = performanceEvaluatorBaseline.getTotalNonZeroAccumulator();
+
+        System.out.println("Baseline Ranked Search engine: " + accumulatorBaseline + " Impact Ranked Search engine: " + accumulator);
+        
+        statisticScores
+                .add(new StatisticScores("defaultImpactRanked", meanAvgPrecision, meanResponseTime, throughput));
+
+        statisticScores
+                .add(new StatisticScores("defaultBaselineRanked", meanAvgPrecisionBaseline, meanResponseTimeBaseline,
+                        throughputBaseline));
+
+        // plot PR curve for first query
+
+    }
+
+    public void analyzeImpactOrderingBooleanQueries(Index index, Index impactIndex, DocumentCorpus corpus) {
+        BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
+        booleanQueryParser.setKGramIndex(EngineStore.getkGramIndex());
+        booleanQueryParser.setBiwordIndex(EngineStore.getBiwordIndex());
+        booleanQueryParser.setTokenProcessor(EngineStore.getTokenProcessor());
+
+        BooleanQuerySearch booleanQuerySearchEngine = new BooleanQuerySearch(booleanQueryParser);
+
+        // List<String> rankingScoreSchemeNames =
+        // impactOrderingSearchEngine.getRankingScoreSchemeNames();
+        // booleanQuerySearchEngine.setK(50);
+
+        List<StatisticScores> statisticScores = new ArrayList<>();
+
+        PerformanceEvaluator performanceEvaluatorImpact = new PerformanceEvaluator(impactIndex, corpus,
+                booleanQuerySearchEngine);
+        PerformanceEvaluator performanceEvaluatorBaseline = new PerformanceEvaluator(index, corpus,
+                booleanQuerySearchEngine);
+
+        double meanAvgPrecision = performanceEvaluatorImpact.getMeanAvgPrecision(queries, relevantDocNums);
+        String firstQuery = queries.get(0);
+        double meanResponseTime = performanceEvaluatorImpact.getMeanResponseTime(firstQuery);
+        double throughput = performanceEvaluatorImpact.getThroughput(firstQuery);
+
+        double meanAvgPrecisionBaseline = performanceEvaluatorBaseline.getMeanAvgPrecision(queries, relevantDocNums);
+        String firstQueryBaseline = queries.get(0);
+        double meanResponseTimeBaseline = performanceEvaluatorBaseline.getMeanResponseTime(firstQuery);
+        double throughputBaseline = performanceEvaluatorBaseline.getThroughput(firstQueryBaseline);
+
+        statisticScores
+                .add(new StatisticScores("defaultImpactBoolean", meanAvgPrecision, meanResponseTime, throughput));
+
+        statisticScores
+                .add(new StatisticScores("defaultBaselineBoolean", meanAvgPrecisionBaseline, meanResponseTimeBaseline,
+                        throughputBaseline));
+
+        // plot PR curve for first query
+
     }
 }

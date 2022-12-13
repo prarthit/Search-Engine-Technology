@@ -7,6 +7,7 @@ import java.util.Set;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
 import cecs429.querying.QuerySearch;
+import cecs429.querying.RankedQuerySearch;
 import cecs429.querying.Result;
 
 public class PerformanceEvaluator {
@@ -85,5 +86,9 @@ public class PerformanceEvaluator {
 
     public double getThroughput(String query) {
         return 1 / getMeanResponseTime(query);
+    }
+
+    public int getTotalNonZeroAccumulator(){
+        return ((RankedQuerySearch)querySearchEngine).getTotalNonZeroAccumulator();
     }
 }

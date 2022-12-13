@@ -13,6 +13,10 @@ import cecs429.text.TokenProcessor;
 
 public class ImpactOrderingSearch extends RankedQuerySearch {
 
+    public ImpactOrderingSearch() {
+        super();
+    }
+
     public ImpactOrderingSearch(int k, String ranking_score_scheme, TokenProcessor processor) {
         super(k, ranking_score_scheme, processor);
     }
