@@ -82,6 +82,10 @@ public class RankedQuerySearch extends QuerySearch {
         variantFormulaContext.setVariantStrategy(variantStrategy);
     }
 
+    public List<String> getRankingScoreSchemeNames() {
+        return new ArrayList<>(variantStrategyMap.keySet());
+    }
+
     private void preFilterBagOfWords(List<String> bagOfWords) {
         ListIterator<String> it = bagOfWords.listIterator();
 
