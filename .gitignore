@@ -22,7 +22,11 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
+# Corpus directories
 all-nps-sites-extracted
+relevance_cranfield
+relevance_parks
+
 *.txt
 .vscode
 .DS_Store

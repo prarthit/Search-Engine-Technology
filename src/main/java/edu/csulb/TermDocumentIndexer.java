@@ -20,6 +20,7 @@ import cecs429.indexing.diskIndex.DiskIndexWriter;
 import cecs429.indexing.diskIndex.DiskIndexWriterEncoded;
 import cecs429.indexing.diskIndex.DiskPositionalIndex;
 import cecs429.indexing.diskIndex.DiskPositionalIndexDecoded;
+import cecs429.performance.PerformanceAnalyzer;
 import cecs429.querying.BooleanQueryParser;
 import cecs429.querying.BooleanQuerySearch;
 import cecs429.querying.QuerySearch;
@@ -121,6 +122,14 @@ public class TermDocumentIndexer {
 					int k = Integer.parseInt(prop.getProperty("num_results"));
 					String ranking_score_scheme = prop.getProperty("ranking_score_scheme");
 					querySearchEngine = new RankedQuerySearch(k, ranking_score_scheme, processor);
+
+					// Evaluate performance of the Ranked Query Search Engine and display the
+					// results if relevance directory is present in corpus directory
+					if (Utils.isValidDirectory(newDirectoryPath + "/relevance")) {
+						PerformanceAnalyzer performanceAnalyzer = new PerformanceAnalyzer();
+
+						performanceAnalyzer.analyzeRankingFormulas(index, corpus);
+					}
 				}
 			}
 
