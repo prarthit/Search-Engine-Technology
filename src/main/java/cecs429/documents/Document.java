@@ -22,6 +22,11 @@ public interface Document {
 	String getTitle();
 
 	/**
+	 * The file name of the document, for displaying to the user.
+	 */
+	String getDocumentName();
+
+	/**
 	 * The size of the document in bytes.
 	 */
 	long getByteSize();

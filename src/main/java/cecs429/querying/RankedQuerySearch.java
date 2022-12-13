@@ -26,6 +26,7 @@ import cecs429.querying.variantFormulas.Tf_idfWeightingStrategy;
 import cecs429.querying.variantFormulas.VariantFormulaContext;
 import cecs429.querying.variantFormulas.VariantStrategy;
 import cecs429.querying.variantFormulas.WackyWeightingStrategy;
+import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.TokenProcessor;
 import edu.csulb.EngineStore;
 
@@ -56,8 +57,8 @@ public class RankedQuerySearch extends QuerySearch {
         }
     };
     private VariantFormulaContext variantFormulaContext = new VariantFormulaContext();
-    private TokenProcessor processor;
     private int totalNonZeroAccumulator;
+    private TokenProcessor processor = new AdvancedTokenProcessor();
 
     public RankedQuerySearch() {
         variantFormulaContext.setVariantStrategy(new DefaultWeightingStrategy());

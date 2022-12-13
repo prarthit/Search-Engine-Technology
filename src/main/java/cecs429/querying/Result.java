@@ -1,7 +1,6 @@
 package cecs429.querying;
 
 import cecs429.documents.Document;
-import cecs429.documents.FileDocument;
 
 public class Result {
     private Document document;
@@ -18,7 +17,7 @@ public class Result {
 
     // Return document number from the document name
     public int getDocNum() {
-        String documentName = document.getTitle();
+        String documentName = document.getDocumentName();
         documentName = documentName.replaceFirst("[.][^.]+$", "");
         int documentNumber = Integer.parseInt(documentName);
         return documentNumber;
@@ -29,7 +28,7 @@ public class Result {
         String s = "";
         s += document.getTitle()
                 + " (FileName: "
-                + ((FileDocument) document).getFilePath().getFileName().toString()
+                + document.getDocumentName()
                 + ")";
         if (accumulator != null) {
             s += "(Accumulator: " + accumulator + ")";
