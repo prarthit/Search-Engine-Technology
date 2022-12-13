@@ -30,7 +30,7 @@ public class PerformanceAnalyzer {
     private List<String> parseQueriesFromFile() {
         List<String> queries = new ArrayList<>();
         String corpusDir = Utils.getProperties().getProperty("corpus_directory_path");
-        try (Scanner sc = new Scanner(new File(corpusDir + "/relevance/queries"))) {
+        try (Scanner sc = new Scanner(new File(corpusDir + "/relevance/queries2"))) {
             while (sc.hasNextLine()) {
                 String query = sc.nextLine();
                 queries.add(query);
@@ -117,9 +117,8 @@ public class PerformanceAnalyzer {
         ImpactOrderingSearch impactOrderingSearchEngine = new ImpactOrderingSearch();
         RankedQuerySearch rankedQuerySearchEngineBaseline = new RankedQuerySearch();
 
-        // List<String> rankingScoreSchemeNames =
-        // impactOrderingSearchEngine.getRankingScoreSchemeNames();
         impactOrderingSearchEngine.setK(50);
+        rankedQuerySearchEngineBaseline.setK(50);
 
         List<StatisticScores> statisticScores = new ArrayList<>();
 
@@ -132,25 +131,38 @@ public class PerformanceAnalyzer {
         String firstQuery = queries.get(0);
         double meanResponseTime = performanceEvaluatorImpact.getMeanResponseTime(firstQuery);
         double throughput = performanceEvaluatorImpact.getThroughput(firstQuery);
-        int accumulator = performanceEvaluatorBaseline.getTotalNonZeroAccumulator();
+        double accumulator = performanceEvaluatorImpact.getTotalNonZeroAccumulator(queries);
 
         double meanAvgPrecisionBaseline = performanceEvaluatorBaseline.getMeanAvgPrecision(queries, relevantDocNums);
         String firstQueryBaseline = queries.get(0);
         double meanResponseTimeBaseline = performanceEvaluatorBaseline.getMeanResponseTime(firstQuery);
         double throughputBaseline = performanceEvaluatorBaseline.getThroughput(firstQueryBaseline);
-        int accumulatorBaseline = performanceEvaluatorBaseline.getTotalNonZeroAccumulator();
+        double accumulatorBaseline = performanceEvaluatorBaseline.getTotalNonZeroAccumulator(queries);
 
-        System.out.println("Baseline Ranked Search engine: " + accumulatorBaseline + " Impact Ranked Search engine: " + accumulator);
-        
-        statisticScores
-                .add(new StatisticScores("defaultImpactRanked", meanAvgPrecision, meanResponseTime, throughput));
+        System.out.println("\n*** Ranked Queries - Impact Ordering & Baseline ***\n");
 
         statisticScores
-                .add(new StatisticScores("defaultBaselineRanked", meanAvgPrecisionBaseline, meanResponseTimeBaseline,
+                .add(new StatisticScores("Ranked Impact", meanAvgPrecision, meanResponseTime, throughput));
+
+        statisticScores
+                .add(new StatisticScores("Ranked Baseline", meanAvgPrecisionBaseline, meanResponseTimeBaseline,
                         throughputBaseline));
 
-        // plot PR curve for first query
+        AsciiTable at = new AsciiTable();
+        at.addRule();
+        at.addRow(StatisticScores.getHeader());
+        for (StatisticScores ss : statisticScores) {
+            at.addRule();
+            at.addRow(ss.getContent());
+        }
+        at.addRule();
 
+        String rend = at.render();
+        System.out.println(rend);
+
+        System.out.println("\nBaseline Ranked Accumulator: " + accumulatorBaseline + "\nImpact Ranked Accumulator: "
+                + accumulator + "\n");
+        // plot PR curve for first query
     }
 
     public void analyzeImpactOrderingBooleanQueries(Index index, Index impactIndex, DocumentCorpus corpus) {
@@ -160,10 +172,6 @@ public class PerformanceAnalyzer {
         booleanQueryParser.setTokenProcessor(EngineStore.getTokenProcessor());
 
         BooleanQuerySearch booleanQuerySearchEngine = new BooleanQuerySearch(booleanQueryParser);
-
-        // List<String> rankingScoreSchemeNames =
-        // impactOrderingSearchEngine.getRankingScoreSchemeNames();
-        // booleanQuerySearchEngine.setK(50);
 
         List<StatisticScores> statisticScores = new ArrayList<>();
 
@@ -182,13 +190,25 @@ public class PerformanceAnalyzer {
         double meanResponseTimeBaseline = performanceEvaluatorBaseline.getMeanResponseTime(firstQuery);
         double throughputBaseline = performanceEvaluatorBaseline.getThroughput(firstQueryBaseline);
 
+        System.out.println("\n*** Boolean Queries - Impact Ordering & Baseline ***\n");
         statisticScores
-                .add(new StatisticScores("defaultImpactBoolean", meanAvgPrecision, meanResponseTime, throughput));
+                .add(new StatisticScores("Boolean Impact", meanAvgPrecision, meanResponseTime, throughput));
 
         statisticScores
-                .add(new StatisticScores("defaultBaselineBoolean", meanAvgPrecisionBaseline, meanResponseTimeBaseline,
+                .add(new StatisticScores("Boolean Baseline", meanAvgPrecisionBaseline, meanResponseTimeBaseline,
                         throughputBaseline));
 
+        AsciiTable at = new AsciiTable();
+        at.addRule();
+        at.addRow(StatisticScores.getHeader());
+        for (StatisticScores ss : statisticScores) {
+            at.addRule();
+            at.addRow(ss.getContent());
+        }
+        at.addRule();
+
+        String rend = at.render();
+        System.out.println(rend);
         // plot PR curve for first query
 
     }

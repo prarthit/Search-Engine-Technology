@@ -11,6 +11,8 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.PriorityQueue;
 
+import javax.print.DocFlavor.STRING;
+
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
@@ -57,9 +59,8 @@ public class RankedQuerySearch extends QuerySearch {
         }
     };
     private VariantFormulaContext variantFormulaContext = new VariantFormulaContext();
-    private int totalNonZeroAccumulator;
     private TokenProcessor processor = new AdvancedTokenProcessor();
-
+    private HashMap<String, Integer> accumulatorHashMap = new HashMap<>();
     public RankedQuerySearch() {
         variantFormulaContext.setVariantStrategy(new DefaultWeightingStrategy());
     };
@@ -117,7 +118,7 @@ public class RankedQuerySearch extends QuerySearch {
 
                 int N = corpus.getCorpusSize(); // Total number of documents in corpus
                 double avgDocLength = DocWeightsReader.readAvgDocLength(raf);
-                int impactThresholdValue = 0;
+                double impactThresholdValue = 0;
 
                 computeAccumulator(postings, raf, variantFormulaContext, N, avgDocLength, accumulator,
                         impactThresholdValue);
@@ -129,7 +130,9 @@ public class RankedQuerySearch extends QuerySearch {
                 int docId = entry.getKey();
                 double a_d = entry.getValue();
 
-                if(a_d > 0) ++totalNonZeroAccumulator;
+                if(a_d > 0) {
+                    accumulatorHashMap.put(query, accumulatorHashMap.getOrDefault(query, 0) + 1);
+                }
 
                 DocWeights docWeights = DocWeightsReader.readDocWeights(docId, raf);
                 ScoreParameters scoreParameters = variantFormulaContext
@@ -164,7 +167,7 @@ public class RankedQuerySearch extends QuerySearch {
 
     protected void computeAccumulator(List<Posting> postings, RandomAccessFile raf,
             VariantFormulaContext variantFormulaContext2, int N, double avgDocLength,
-            Map<Integer, Double> accumulator, int impactThresholdValue) {
+            Map<Integer, Double> accumulator, double impactThresholdValue) {
 
         double df_t = postings.size(); // Document frequency of term
 
@@ -182,7 +185,8 @@ public class RankedQuerySearch extends QuerySearch {
         }
     }
 
-    public int getTotalNonZeroAccumulator(){
-        return totalNonZeroAccumulator;
+
+    public HashMap<String, Integer> getAccumulatorHashMap() {
+        return accumulatorHashMap;
     }
 }

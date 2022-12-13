@@ -115,6 +115,7 @@ public class TermDocumentIndexer {
 					if (Utils.isValidDirectory(newDirectoryPath + "/relevance")) {
 						PerformanceAnalyzer performanceAnalyzer = new PerformanceAnalyzer();
 
+						performanceAnalyzer.analyzeRankingFormulas(index, corpus);
 						performanceAnalyzer.analyzeImpactOrderingBooleanQueries(index, impactIndex, corpus);
 						performanceAnalyzer.analyzeImpactOrdering(index, impactIndex, corpus);
 					}
@@ -129,6 +130,8 @@ public class TermDocumentIndexer {
 						PerformanceAnalyzer performanceAnalyzer = new PerformanceAnalyzer();
 
 						performanceAnalyzer.analyzeRankingFormulas(index, corpus);
+						performanceAnalyzer.analyzeImpactOrderingBooleanQueries(index, impactIndex, corpus);
+						performanceAnalyzer.analyzeImpactOrdering(index, impactIndex, corpus);
 					}
 				}
 			}
