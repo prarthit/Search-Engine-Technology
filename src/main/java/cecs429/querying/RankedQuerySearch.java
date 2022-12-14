@@ -11,6 +11,8 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.PriorityQueue;
 
+import javax.print.DocFlavor.STRING;
+
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
@@ -26,6 +28,7 @@ import cecs429.querying.variantFormulas.Tf_idfWeightingStrategy;
 import cecs429.querying.variantFormulas.VariantFormulaContext;
 import cecs429.querying.variantFormulas.VariantStrategy;
 import cecs429.querying.variantFormulas.WackyWeightingStrategy;
+import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.TokenProcessor;
 import edu.csulb.EngineStore;
 
@@ -56,8 +59,8 @@ public class RankedQuerySearch extends QuerySearch {
         }
     };
     private VariantFormulaContext variantFormulaContext = new VariantFormulaContext();
-    private TokenProcessor processor;
-
+    private TokenProcessor processor = new AdvancedTokenProcessor();
+    private HashMap<String, Integer> accumulatorHashMap = new HashMap<>();
     public RankedQuerySearch() {
         variantFormulaContext.setVariantStrategy(new DefaultWeightingStrategy());
     };
@@ -114,22 +117,11 @@ public class RankedQuerySearch extends QuerySearch {
                 List<Posting> postings = index.getPostingsExcludePositions(processedQuery);
 
                 int N = corpus.getCorpusSize(); // Total number of documents in corpus
-                double df_t = postings.size(); // Document frequency of term
-
                 double avgDocLength = DocWeightsReader.readAvgDocLength(raf);
+                double impactThresholdValue = 0;
 
-                for (Posting p : postings) {
-                    int docId = p.getDocumentId();
-                    double tf_td = p.getTermFrequency();
-
-                    DocWeights docWeights = DocWeightsReader.readDocWeights(p.getDocumentId(), raf);
-                    ScoreParameters scoreParameters = variantFormulaContext
-                            .executeVariantStrategy(new DocWeightParameters(N, df_t, tf_td, avgDocLength, docWeights));
-                    double w_dt = scoreParameters.get_w_dt();
-                    double w_qt = scoreParameters.get_w_qt();
-
-                    accumulator.put(docId, accumulator.getOrDefault(docId, 0.0) + (w_dt * w_qt));
-                }
+                computeAccumulator(postings, raf, variantFormulaContext, N, avgDocLength, accumulator,
+                        impactThresholdValue);
             }
 
             PriorityQueue<Pair> maxHeap = new PriorityQueue<>();
@@ -137,6 +129,10 @@ public class RankedQuerySearch extends QuerySearch {
             for (Map.Entry<Integer, Double> entry : accumulator.entrySet()) {
                 int docId = entry.getKey();
                 double a_d = entry.getValue();
+
+                if(a_d > 0) {
+                    accumulatorHashMap.put(query, accumulatorHashMap.getOrDefault(query, 0) + 1);
+                }
 
                 DocWeights docWeights = DocWeightsReader.readDocWeights(docId, raf);
                 ScoreParameters scoreParameters = variantFormulaContext
@@ -168,10 +164,10 @@ public class RankedQuerySearch extends QuerySearch {
 
         return new ArrayList<>();
     }
-    
+
     protected void computeAccumulator(List<Posting> postings, RandomAccessFile raf,
             VariantFormulaContext variantFormulaContext2, int N, double avgDocLength,
-            Map<Integer, Double> accumulator, int impactThresholdValue) {
+            Map<Integer, Double> accumulator, double impactThresholdValue) {
 
         double df_t = postings.size(); // Document frequency of term
 
@@ -187,5 +183,10 @@ public class RankedQuerySearch extends QuerySearch {
 
             accumulator.put(docId, accumulator.getOrDefault(docId, 0.0) + (w_dt * w_qt));
         }
+    }
+
+
+    public HashMap<String, Integer> getAccumulatorHashMap() {
+        return accumulatorHashMap;
     }
 }

@@ -1,18 +1,20 @@
 package cecs429.performance;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
 import cecs429.querying.QuerySearch;
+import cecs429.querying.RankedQuerySearch;
 import cecs429.querying.Result;
 
 public class PerformanceEvaluator {
-    Index index;
-    DocumentCorpus corpus;
-    QuerySearch querySearchEngine;
+    private Index index;
+    private DocumentCorpus corpus;
+    private QuerySearch querySearchEngine;
 
     public PerformanceEvaluator(Index index, DocumentCorpus corpus, QuerySearch querySearchEngine) {
         this.index = index;
@@ -68,15 +70,15 @@ public class PerformanceEvaluator {
 
     public double getMeanResponseTime(String query) {
         double totalTime = 0;
-        int iterations = 30;
+        int iterations = 1;
 
-        // Run findQuery for 30 iterations and take the average of the response time
+        // Run findQuery for num of iterations and take the average of the response time
         for (int i = 1; i <= iterations; i++) {
             long startTime = System.currentTimeMillis(); // Start time to find results for the query
             querySearchEngine.findQuery(query, index, corpus);
             long endTime = System.currentTimeMillis(); // End time to find results for the query
 
-            double timeTakenToFindResults = (endTime - startTime) / 1000;
+            double timeTakenToFindResults = (endTime - startTime);
             totalTime += timeTakenToFindResults;
         }
 
@@ -84,6 +86,31 @@ public class PerformanceEvaluator {
     }
 
     public double getThroughput(String query) {
-        return 1 / getMeanResponseTime(query);
+        return getThroughput(getMeanResponseTime(query));
+    }
+
+    public double getThroughput(double mrt) {
+        return 1000 / mrt;
+    }
+
+    public double getTotalNonZeroAccumulator(List<String> queries){
+        double total = 0.0;
+        HashMap<String, Integer> hm = ((RankedQuerySearch)querySearchEngine).getAccumulatorHashMap();
+        for(int i=0;i<queries.size();i++){
+            if(hm.containsKey(queries.get(i))){
+                total += hm.getOrDefault(queries.get(i), 0);
+            }
+        }
+        try{
+            total/=queries.size();
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        finally{
+            if(queries.size() == 0)
+                total = 0.0;
+        }
+        return total;
     }
 }

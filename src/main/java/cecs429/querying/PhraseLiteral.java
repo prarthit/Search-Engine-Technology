@@ -2,6 +2,7 @@ package cecs429.querying;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -59,18 +60,88 @@ public class PhraseLiteral implements QueryComponent {
 			}
 		}
 
+		boolean impact_ordering = false;
 		// Convert raw query string into a term or wildcard literal
 		QueryComponent currQueryComponent = termToLiteral(mTerms.get(0));
 		List<Posting> result = currQueryComponent.getPostings(index);
+
+		if (!utils.Utils.isSortedList(result)) {
+			impact_ordering = true;
+		}
 
 		for (int i = 1; i < mTerms.size(); i++) {
 			// Convert raw query string into a term or wildcard literal
 			currQueryComponent = termToLiteral(mTerms.get(i));
 			List<Posting> literalPostings = currQueryComponent.getPostings(index);
-			result = positionalIntersect(result, literalPostings);
+			if (impact_ordering || !utils.Utils.isSortedList(literalPostings)) {
+				result = positionalIntersectUnsortedLists(result, literalPostings);
+			} else
+				result = positionalIntersect(result, literalPostings);
 		}
 
 		return result;
+	}
+
+	private List<Posting> positionalIntersectUnsortedLists(List<Posting> literalPostings1,
+			List<Posting> literalPostings2) {
+		List<Posting> res = new ArrayList<>();
+		HashMap<Integer, List<Integer>> hmap = new HashMap<>();
+
+		if (literalPostings1.size() > literalPostings2.size()) {
+			createHashMapWithPostings(hmap, literalPostings1);
+			findPostingUsingHashMap(res, hmap, literalPostings2);
+		} else {
+			createHashMapWithPostings(hmap, literalPostings2);
+			findPostingUsingHashMap(res, hmap, literalPostings1);
+		}
+
+		return res;
+	}
+
+	private void createHashMapWithPostings(HashMap<Integer, List<Integer>> hmap, List<Posting> literalPostings) {
+		for (Posting p : literalPostings) {
+			hmap.put(p.getDocumentId(), p.getPositions());
+		}
+	}
+
+	private void findPostingUsingHashMap(List<Posting> res, HashMap<Integer, List<Integer>> hmap,
+			List<Posting> literalPostings) {
+		for (Posting p : literalPostings) {
+			if (hmap.containsKey(p.getDocumentId())) {
+				List<Integer> documentPositions = new ArrayList<>();
+				List<Integer> postingPosition1 = p.getPositions();
+				List<Integer> postingPosition2 = hmap.get(p.getDocumentId());
+
+				mergePostingPositions(documentPositions, postingPosition1, postingPosition2);
+				if (documentPositions.size() != 0) {
+					res.add(new Posting(p.getDocumentId(), documentPositions));
+				}
+			}
+		}
+	}
+
+	private void mergePostingPositions(List<Integer> documentPositions, List<Integer> postingPosition1,
+			List<Integer> postingPosition2) {
+		int plen1 = postingPosition1.size();
+		int plen2 = postingPosition2.size();
+
+		int m = 0;
+		int n = 0;
+
+		while (m != plen1 && n != plen2) {
+			int mPosition = postingPosition1.get(m);
+			int nPosition = postingPosition2.get(n);
+
+			if (nPosition - mPosition == 1) {
+				documentPositions.add(nPosition);
+				m++;
+				n++;
+			} else if (mPosition >= nPosition) {
+				n++;
+			} else {
+				m++;
+			}
+		}
 	}
 
 	private List<Posting> positionalIntersect(List<Posting> literalPostings1, List<Posting> literalPostings2) {
@@ -88,26 +159,7 @@ public class PhraseLiteral implements QueryComponent {
 				List<Integer> postingPosition1 = p1.getPositions();
 				List<Integer> postingPosition2 = p2.getPositions();
 
-				int plen1 = postingPosition1.size();
-				int plen2 = postingPosition2.size();
-
-				int m = 0;
-				int n = 0;
-
-				while (m != plen1 && n != plen2) {
-					int mPosition = postingPosition1.get(m);
-					int nPosition = postingPosition2.get(n);
-
-					if (nPosition - mPosition == 1) {
-						documentPositions.add(nPosition);
-						m++;
-						n++;
-					} else if (mPosition >= nPosition) {
-						n++;
-					} else {
-						m++;
-					}
-				}
+				mergePostingPositions(documentPositions, postingPosition1, postingPosition2);
 				if (documentPositions.size() != 0) {
 					res.add(new Posting(p1.getDocumentId(), documentPositions));
 				}

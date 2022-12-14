@@ -79,6 +79,7 @@ public class BooleanQueryParser {
 
 			do {
 				// Extract the next literal from the subquery.
+				subquery = subquery.stripTrailing();
 				Literal lit = findNextLiteral(subquery, subStart);
 
 				// Add the literal component to the conjunctive list.
