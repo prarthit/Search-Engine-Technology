@@ -5,6 +5,7 @@ import java.util.List;
 import de.vandermeer.asciitable.AT_Cell;
 import de.vandermeer.asciitable.AsciiTable;
 import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment;
+import utils.Utils;
 
 public class StatisticScores {
     String scoreName;
@@ -17,10 +18,10 @@ public class StatisticScores {
             double meanResponseTimeForSingleQuery,
             double throughputForSingleQuery) {
         this.scoreName = scoreName;
-        this.meanAvgPrecision = meanAvgPrecision;
-        this.avgPrecisionForSingleQuery = avgPrecisionForSingleQuery;
-        this.meanResponseTimeForSingleQuery = meanResponseTimeForSingleQuery;
-        this.throughputForSingleQuery = throughputForSingleQuery;
+        this.meanAvgPrecision = Utils.formatDouble(meanAvgPrecision);
+        this.avgPrecisionForSingleQuery = Utils.formatDouble(avgPrecisionForSingleQuery);
+        this.meanResponseTimeForSingleQuery = Utils.formatDouble(meanResponseTimeForSingleQuery);
+        this.throughputForSingleQuery = Utils.formatDouble(throughputForSingleQuery);
     }
 
     private Object[] getContent() {

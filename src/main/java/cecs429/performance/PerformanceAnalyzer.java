@@ -85,6 +85,8 @@ public class PerformanceAnalyzer {
             statisticScoresForRankingSchemes
                     .add(new StatisticScores(rankingScoreSchemeName, meanAvgPrecision, avgPrecision, meanResponseTime,
                             throughput));
+
+            performanceEvaluator.drawPRCurve(firstQuery, rankingScoreSchemeName, relevantDocNums.get(0));
         }
 
         StatisticScores.printScoresList(statisticScoresForRankingSchemes);

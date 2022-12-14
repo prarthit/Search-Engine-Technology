@@ -90,4 +90,63 @@ public class PerformanceEvaluator {
     public double getThroughput(double mrt) {
         return 1000 / mrt;
     }
+
+    private List<Double> calcPrecisionList(List<Integer> retrievedDocNums, Set<Integer> relevantDocNums) {
+        List<Double> precisionList = new ArrayList<>();
+
+        // Total number of relevant documents from results if we consider only first i
+        // results
+        int total_relevant_till_i = 0;
+        for (int i = 1; i <= retrievedDocNums.size(); i++) {
+            int currDocNum = retrievedDocNums.get(i - 1);
+
+            // relevant(i) - Is the current docId relevant?
+            int isRelevant = relevantDocNums.contains(currDocNum) ? 1 : 0;
+            total_relevant_till_i = isRelevant == 1 ? total_relevant_till_i + 1 : total_relevant_till_i;
+            double P_i = (double) total_relevant_till_i / i; // P@i - Precision if we consider only first i results
+            precisionList.add(P_i);
+        }
+
+        return precisionList;
+    }
+
+    private List<Double> calcRecallList(List<Integer> retrievedDocNums, Set<Integer> relevantDocNums) {
+        List<Double> recallList = new ArrayList<>();
+        int rel_size = relevantDocNums.size();
+
+        // Total number of relevant documents from results if we consider only first i
+        // results
+        int total_relevant_till_i = 0;
+        for (int i = 1; i <= retrievedDocNums.size(); i++) {
+            int currDocNum = retrievedDocNums.get(i - 1);
+
+            // relevant(i) - Is the current docId relevant?
+            int isRelevant = relevantDocNums.contains(currDocNum) ? 1 : 0;
+            total_relevant_till_i = isRelevant == 1 ? total_relevant_till_i + 1 : total_relevant_till_i;
+            double R_i = (double) total_relevant_till_i / rel_size; // P@i - Precision if we consider only first i
+                                                                    // results
+            recallList.add(R_i);
+        }
+
+        return recallList;
+    }
+
+    public void drawPRCurve(String query, String title, Set<Integer> relevantDocNums) {
+        List<Result> results = querySearchEngine.findQuery(query, index, corpus);
+        List<Integer> resultDocNums = new ArrayList<>();
+        for (Result result : results) {
+            resultDocNums.add(result.getDocNum());
+        }
+
+        List<Double> precisionList = calcPrecisionList(resultDocNums, relevantDocNums);
+        List<Double> recallList = calcRecallList(resultDocNums, relevantDocNums);
+
+        drawPRCurve(title, precisionList, recallList);
+    }
+
+    private void drawPRCurve(String title, List<Double> precisionList, List<Double> recallList) {
+        final Plotting plot = new Plotting(title, recallList, precisionList);
+        plot.pack();
+        plot.setVisible(true);
+    }
 }

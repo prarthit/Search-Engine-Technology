@@ -2,7 +2,6 @@ package cecs429.querying;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,6 +28,7 @@ import cecs429.querying.variantFormulas.WackyWeightingStrategy;
 import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.TokenProcessor;
 import edu.csulb.EngineStore;
+import utils.Utils;
 
 class Pair implements Comparable<Pair> {
     int first;
@@ -155,8 +155,7 @@ public class RankedQuerySearch extends QuerySearch {
 
                 Document document = corpus.getDocument(top_ith_pair.first);
 
-                DecimalFormat df = new DecimalFormat("#.##");
-                Double doc_accumulator = Double.parseDouble(df.format(top_ith_pair.second));
+                Double doc_accumulator = Utils.formatDouble(top_ith_pair.second);
 
                 topKSearchResults.add(new Result(document, doc_accumulator));
             }
