@@ -25,7 +25,7 @@ public class VocabularyEliminationSearchEngine extends RankedQuerySearch {
     @Override
     protected void computeAccumulator(List<Posting> postings, RandomAccessFile raf,
             VariantFormulaContext variantFormulaContext, int N, double avgDocLength, Map<Integer, Double> accumulator,
-            int impactThresholdValue) {
+            double impactThresholdValue) {
 
         double df_t = postings.size(); // Document frequency of term
 

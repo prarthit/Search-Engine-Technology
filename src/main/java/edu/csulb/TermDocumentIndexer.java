@@ -113,11 +113,7 @@ public class TermDocumentIndexer {
 					querySearchEngine = new BooleanQuerySearch(booleanQueryParser);
 
 					if (Utils.isValidDirectory(newDirectoryPath + "/relevance")) {
-						PerformanceAnalyzer performanceAnalyzer = new PerformanceAnalyzer();
-
-						performanceAnalyzer.analyzeRankingFormulas(index, corpus);
-						performanceAnalyzer.analyzeImpactOrderingBooleanQueries(index, impactIndex, corpus);
-						performanceAnalyzer.analyzeImpactOrdering(index, impactIndex, corpus);
+						performanceAnalyze(corpus, index, impactIndex);
 					}
 				} else {
 					int k = Integer.parseInt(prop.getProperty("num_results"));
@@ -127,11 +123,7 @@ public class TermDocumentIndexer {
 					// Evaluate performance of the Ranked Query Search Engine and display the
 					// results if relevance directory is present in corpus directory
 					if (Utils.isValidDirectory(newDirectoryPath + "/relevance")) {
-						PerformanceAnalyzer performanceAnalyzer = new PerformanceAnalyzer();
-
-						performanceAnalyzer.analyzeRankingFormulas(index, corpus);
-						performanceAnalyzer.analyzeImpactOrderingBooleanQueries(index, impactIndex, corpus);
-						performanceAnalyzer.analyzeImpactOrdering(index, impactIndex, corpus);
+						performanceAnalyze(corpus, index, impactIndex);
 					}
 				}
 			}
@@ -152,6 +144,18 @@ public class TermDocumentIndexer {
 		sc.close();
 
 		return;
+	}
+
+	private static void performanceAnalyze(DocumentCorpus corpus, Index index, Index impactIndex) {
+		PerformanceAnalyzer performanceAnalyzer = new PerformanceAnalyzer();
+		System.out.println("\nAnalyzing...\n");
+		performanceAnalyzer.analyzeRankingFormulas(index, corpus);
+		System.out.println("\nAnalyzing Vocab Elimination...\n");
+		performanceAnalyzer.analyzeVocabElimination(index, corpus);
+		System.out.println("\nAnalyzing Boolean Queries - Impact Ordering...\n");
+		performanceAnalyzer.analyzeImpactOrderingBooleanQueries(index, impactIndex, corpus);
+		System.out.println("\nAnalyzing Ranked Queries - Impact Ordering...\n");
+		performanceAnalyzer.analyzeImpactOrdering(index, impactIndex, corpus);
 	}
 
 	public static boolean processSpecialQueries(String query, TokenProcessor processor, Index index) {
