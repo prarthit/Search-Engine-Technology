@@ -76,7 +76,7 @@ public class TermDocumentIndexer {
 				DiskIndexWriter dWriter = new DiskIndexWriter();
 
 				dWriter.setMetrics(diskDirPath, processor, corpus);
-				
+
 				// Set the batch limit for the insert operation
 				dWriter.setMaximumBatchLimit(Integer.parseInt(prop.getProperty("maximum_batch_size")));
 
@@ -162,8 +162,10 @@ public class TermDocumentIndexer {
 		termPositionCrud.closeConn();
 	}
 
-	private static void fillHashMapForTermBytePositionImpact(HashMap<String, Long> termBytePositionMapImpact) throws SQLException {
-		TermPositionCrud termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX_IMPACT.getDbIndexFileName());
+	private static void fillHashMapForTermBytePositionImpact(HashMap<String, Long> termBytePositionMapImpact)
+			throws SQLException {
+		TermPositionCrud termPositionCrud = new TermPositionCrud(
+				DiskIndexEnum.POSITIONAL_INDEX_IMPACT.getDbIndexFileName());
 		termPositionCrud.openConnection();
 
 		termPositionCrud.getAllTermPositionData(termBytePositionMapImpact);
@@ -172,14 +174,15 @@ public class TermDocumentIndexer {
 
 	private static void performanceAnalyze(DocumentCorpus corpus, Index index, Index impactIndex) {
 		PerformanceAnalyzer performanceAnalyzer = new PerformanceAnalyzer();
-		System.out.println("\nAnalyzing...\n");
-		performanceAnalyzer.analyzeRankingFormulas(index, corpus);
+		// System.out.println("\nAnalyzing...\n");
+		// performanceAnalyzer.analyzeRankingFormulas(index, corpus);
 		System.out.println("\nAnalyzing Vocab Elimination...\n");
 		performanceAnalyzer.analyzeVocabElimination(index, corpus);
-		System.out.println("\nAnalyzing Boolean Queries - Impact Ordering...\n");
-		performanceAnalyzer.analyzeImpactOrderingBooleanQueries(index, impactIndex, corpus);
-		System.out.println("\nAnalyzing Ranked Queries - Impact Ordering...\n");
-		performanceAnalyzer.analyzeImpactOrdering(index, impactIndex, corpus);
+		// System.out.println("\nAnalyzing Boolean Queries - Impact Ordering...\n");
+		// performanceAnalyzer.analyzeImpactOrderingBooleanQueries(index, impactIndex,
+		// corpus);
+		// System.out.println("\nAnalyzing Ranked Queries - Impact Ordering...\n");
+		// performanceAnalyzer.analyzeImpactOrdering(index, impactIndex, corpus);
 	}
 
 	public static boolean processSpecialQueries(String query, TokenProcessor processor, Index index) {

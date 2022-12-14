@@ -78,7 +78,7 @@ public class PerformanceAnalyzer {
         List<StatisticScores> statisticScoresForRankingSchemes = new ArrayList<>();
 
         PerformanceEvaluator performanceEvaluator = new PerformanceEvaluator(index, corpus, rankedQuerySearchEngine);
-        
+
         for (String rankingScoreSchemeName : rankingScoreSchemeNames) {
             rankedQuerySearchEngine.setRankingScoreScheme(rankingScoreSchemeName);
 
@@ -103,14 +103,15 @@ public class PerformanceAnalyzer {
     public void analyzeVocabElimination(Index index, DocumentCorpus corpus) {
         RankedQuerySearch rankedQuerySearchEngine = new RankedQuerySearch();
         rankedQuerySearchEngine.setK(50);
-        List<Float> wqtList = Arrays.asList(1.0f,1.1f,1.2f,1.3f,1.4f,1.5f,1.7f,1.9f,2.1f,2.3f,2.5f); 
+        List<Float> wqtList = Arrays.asList(1.0f, 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.7f, 1.9f, 2.1f, 2.3f, 2.5f);
         List<StatisticScores> statisticScoresForRankingSchemes = new ArrayList<>();
-        
-        for(float wqt : wqtList){
+
+        for (float wqt : wqtList) {
             VocabularyEliminationSearchEngine vocabEliminationSearchEngine = new VocabularyEliminationSearchEngine(wqt);
 
-            PerformanceEvaluator performanceEvaluator = new PerformanceEvaluator(index, corpus, vocabEliminationSearchEngine);
-            
+            PerformanceEvaluator performanceEvaluator = new PerformanceEvaluator(index, corpus,
+                    vocabEliminationSearchEngine);
+
             double meanAvgPrecision = performanceEvaluator.getMeanAvgPrecision(queries, relevantDocNums);
             String firstQuery = queries.get(0);
             double avgPrecision = performanceEvaluator.getAvgPrecision(firstQuery, relevantDocNums.get(0));
@@ -121,7 +122,6 @@ public class PerformanceAnalyzer {
                     .add(new StatisticScores("Vocab Elimination", meanAvgPrecision, avgPrecision, meanResponseTime,
                             throughput));
         }
-        // plot PR curve for first query
         System.out.println("\n*** Ranked Queries - Vocab Elimination ***\n");
         StatisticScores.printScoresList(statisticScoresForRankingSchemes);
     }
@@ -157,18 +157,19 @@ public class PerformanceAnalyzer {
         System.out.println("\n*** Ranked Queries - Impact Ordering & Baseline ***\n");
 
         statisticScoresForRankingSchemes
-                    .add(new StatisticScores("Ranked Impact", meanAvgPrecision, avgPrecision, meanResponseTime,
-                            throughput));
+                .add(new StatisticScores("Ranked Impact", meanAvgPrecision, avgPrecision, meanResponseTime,
+                        throughput));
 
         statisticScoresForRankingSchemes
-                .add(new StatisticScores("Ranked Baseline", meanAvgPrecisionBaseline, avgPrecisionBaseline, meanResponseTimeBaseline,
+                .add(new StatisticScores("Ranked Baseline", meanAvgPrecisionBaseline, avgPrecisionBaseline,
+                        meanResponseTimeBaseline,
                         throughputBaseline));
 
         StatisticScores.printScoresList(statisticScoresForRankingSchemes);
 
         System.out.println("\nBaseline Ranked Accumulator: " + accumulatorBaseline + "\nImpact Ranked Accumulator: "
                 + accumulator + "\n");
-        // plot PR curve for first 
+
         performanceEvaluatorImpact.drawPRCurve(firstQuery, "Ranked Impact", relevantDocNums.get(0));
         performanceEvaluatorBaseline.drawPRCurve(firstQuery, "Ranked Baseline", relevantDocNums.get(0));
     }
@@ -202,11 +203,12 @@ public class PerformanceAnalyzer {
 
         System.out.println("\n*** Boolean Queries - Impact Ordering & Baseline ***\n");
         statisticScoresForRankingSchemes
-                    .add(new StatisticScores("Boolean Impact", meanAvgPrecision, avgPrecision, meanResponseTime,
-                            throughput));
+                .add(new StatisticScores("Boolean Impact", meanAvgPrecision, avgPrecision, meanResponseTime,
+                        throughput));
 
         statisticScoresForRankingSchemes
-                .add(new StatisticScores("Boolean Baseline", meanAvgPrecisionBaseline, avgPrecisionBaseline, meanResponseTimeBaseline,
+                .add(new StatisticScores("Boolean Baseline", meanAvgPrecisionBaseline, avgPrecisionBaseline,
+                        meanResponseTimeBaseline,
                         throughputBaseline));
 
         StatisticScores.printScoresList(statisticScoresForRankingSchemes);

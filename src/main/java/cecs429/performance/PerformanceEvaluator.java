@@ -23,10 +23,14 @@ public class PerformanceEvaluator {
     }
 
     public double getAvgPrecision(String query, Set<Integer> relevantDocNums) {
-        ((RankedQuerySearch)querySearchEngine).setAccumulatorFlag(true);
+        if (querySearchEngine instanceof RankedQuerySearch)
+            ((RankedQuerySearch) querySearchEngine).setAccumulatorFlag(true);
+
         List<Result> results = querySearchEngine.findQuery(query, index, corpus);
-        ((RankedQuerySearch)querySearchEngine).setAccumulatorFlag(false);
-        
+
+        if (querySearchEngine instanceof RankedQuerySearch)
+            ((RankedQuerySearch) querySearchEngine).setAccumulatorFlag(false);
+
         return getAvgPrecision(results, relevantDocNums);
     }
 
@@ -95,27 +99,25 @@ public class PerformanceEvaluator {
         return 1000 / mrt;
     }
 
-    public double getTotalNonZeroAccumulator(List<String> queries){
+    public double getTotalNonZeroAccumulator(List<String> queries) {
         double total = 0.0;
-        HashMap<String, Integer> hm = ((RankedQuerySearch)querySearchEngine).getAccumulatorHashMap();
-        for(int i=0;i<queries.size();i++){
-            if(hm.containsKey(queries.get(i))){
+        HashMap<String, Integer> hm = ((RankedQuerySearch) querySearchEngine).getAccumulatorHashMap();
+        for (int i = 0; i < queries.size(); i++) {
+            if (hm.containsKey(queries.get(i))) {
                 total += hm.getOrDefault(queries.get(i), 0);
             }
         }
-        try{
-            total/=queries.size();
-        }
-        catch(Exception e){
+        try {
+            total /= queries.size();
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally{
-            if(queries.size() == 0)
+        } finally {
+            if (queries.size() == 0)
                 total = 0.0;
         }
         return total;
     }
-    
+
     private List<Double> calcPrecisionList(List<Integer> retrievedDocNums, Set<Integer> relevantDocNums) {
         List<Double> precisionList = new ArrayList<>();
 
