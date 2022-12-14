@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.text.DecimalFormat;
 import java.util.Properties;
 
 import cecs429.indexing.Posting;
@@ -101,5 +102,12 @@ public class Utils {
         }
 
         return prop;
+    }
+
+    public static double formatDouble(double num) {
+        DecimalFormat df = new DecimalFormat("#.##");
+        Double formattedNum = Double.parseDouble(df.format(num));
+
+        return formattedNum;
     }
 }
