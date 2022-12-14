@@ -123,7 +123,7 @@ public class PerformanceEvaluator {
             // relevant(i) - Is the current docId relevant?
             int isRelevant = relevantDocNums.contains(currDocNum) ? 1 : 0;
             total_relevant_till_i = isRelevant == 1 ? total_relevant_till_i + 1 : total_relevant_till_i;
-            double R_i = (double) total_relevant_till_i / rel_size; // P@i - Precision if we consider only first i
+            double R_i = (double) total_relevant_till_i / rel_size; // R@i - Recall if we consider only first i
                                                                     // results
             recallList.add(R_i);
         }
