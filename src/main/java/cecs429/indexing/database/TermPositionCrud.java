@@ -159,4 +159,8 @@ public class TermPositionCrud implements TermPositionDao {
         con.commit();
         con.setAutoCommit(true);
     }
+
+    public void closeConn() throws SQLException{
+        con.close();
+    }
 }

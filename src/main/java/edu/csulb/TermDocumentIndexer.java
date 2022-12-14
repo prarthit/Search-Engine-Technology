@@ -159,6 +159,7 @@ public class TermDocumentIndexer {
 		termPositionCrud.openConnection();
 
 		termPositionCrud.getAllTermPositionData(termBytePositionMap);
+		termPositionCrud.closeConn();
 	}
 
 	private static void fillHashMapForTermBytePositionImpact(HashMap<String, Long> termBytePositionMapImpact) throws SQLException {
@@ -166,6 +167,7 @@ public class TermDocumentIndexer {
 		termPositionCrud.openConnection();
 
 		termPositionCrud.getAllTermPositionData(termBytePositionMapImpact);
+		termPositionCrud.closeConn();
 	}
 
 	private static void performanceAnalyze(DocumentCorpus corpus, Index index, Index impactIndex) {
