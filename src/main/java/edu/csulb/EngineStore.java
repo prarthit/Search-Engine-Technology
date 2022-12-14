@@ -9,6 +9,7 @@ public class EngineStore {
     private static Index index;
     private static KGramIndex kGramIndex;
     private static Index biwordIndex;
+    private static Index impactIndex;
     private static TokenProcessor tokenProcessor;
 
     public static Index getIndex() {
@@ -17,6 +18,14 @@ public class EngineStore {
 
     public static void setIndex(Index index) {
         EngineStore.index = index;
+    }
+
+    public static Index getImpactIndex() {
+        return impactIndex;
+    }
+
+    public static void setImpactIndex(Index impactIndex) {
+        EngineStore.impactIndex = impactIndex;
     }
 
     public static KGramIndex getkGramIndex() {

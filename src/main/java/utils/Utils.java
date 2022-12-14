@@ -7,8 +7,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
+import java.text.DecimalFormat;
 import java.util.Properties;
 
+import cecs429.indexing.Posting;
 import cecs429.text.AdvancedTokenProcessor;
 import cecs429.text.BasicTokenProcessor;
 import cecs429.text.TokenProcessor;
@@ -56,13 +59,7 @@ public class Utils {
     // Returns a file path prefix based on corpus name
     // for disk index files
     public static String generateFilePathPrefix() {
-        Properties prop = new Properties();
-        try {
-            prop.load(new FileInputStream("src/config.properties"));
-        } catch (Exception e) {
-            System.err.println("Cannot read config.properties file");
-            e.printStackTrace();
-        }
+        Properties prop = getProperties();
 
         String filePathPrefix = prop.getProperty("resources_dir") + "/" + corpusName;
         return filePathPrefix;
@@ -71,6 +68,28 @@ public class Utils {
     public static void setCorpusName(String name) {
         corpusName = name;
         createDirectory(generateFilePathPrefix()); // Create directory for corpus if does not exist
+    }
+
+    public static boolean isFileExist(String fileName) {
+        String filePath = generateFilePathPrefix() + fileName;
+
+        File f = new File(filePath);
+        if (f.exists() && !f.isDirectory()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static boolean isSortedList(List<Posting> postings) {
+        if (postings.size() == 0 || postings.size() == 1)
+            return true;
+
+        for (int i = 1; i < postings.size(); i++) {
+            if (postings.get(i - 1).getDocumentId() > postings.get(i).getDocumentId())
+                return false;
+        }
+        return true;
     }
 
     public static Properties getProperties() {
@@ -83,5 +102,12 @@ public class Utils {
         }
 
         return prop;
+    }
+
+    public static double formatDouble(double num) {
+        DecimalFormat df = new DecimalFormat("#.##");
+        Double formattedNum = Double.parseDouble(df.format(num));
+
+        return formattedNum;
     }
 }

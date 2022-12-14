@@ -76,6 +76,11 @@ public class JsonFileDocument implements FileDocument {
 		return mTitle;
 	}
 
+	@Override
+	public String getDocumentName() {
+		return this.getFilePath().getFileName().toString();
+	}
+
 	public static FileDocument loadJsonFileDocument(Path absolutePath, int documentId) {
 		return new JsonFileDocument(documentId, absolutePath);
 	}

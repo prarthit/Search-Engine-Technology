@@ -14,18 +14,17 @@ import java.util.stream.Collectors;
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
 import cecs429.indexing.database.TermPositionCrud;
-import cecs429.indexing.database.TermPositionModel;
 
 /**
  * A DiskPositionalIndex can retrieve postings for a term from a data structure
  * associating terms and the documents
  * that contain them.
  */
-public class DiskPositionalIndex implements Index {
+public class DiskPositionalIndexImpactOrdering implements Index {
     private RandomAccessFile postings;
     private TermPositionCrud termPositionCrud;
     private HashMap<String, Long> termBytePositionMap;
-
+    
     /**
      * Create a disk positional inverted index.
      * 
@@ -33,12 +32,10 @@ public class DiskPositionalIndex implements Index {
      * @param termBytePositionMap
      * @throws SQLException
      */
-    public DiskPositionalIndex(String diskDirectoryPath, HashMap<String, Long> termBytePositionMap) throws SQLException {
+    public DiskPositionalIndexImpactOrdering(String diskDirectoryPath, HashMap<String, Long> termBytePositionMap) throws SQLException {
         try {
-
             postings = new RandomAccessFile(
-                    new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX.getIndexFileName()), "r");
-            
+                    new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX_IMPACT.getIndexFileName()), "r");
             this.termBytePositionMap = termBytePositionMap;
 
         } catch (FileNotFoundException ex) {
@@ -62,7 +59,6 @@ public class DiskPositionalIndex implements Index {
             else{
                 bytePosition = -1;
             }
-    
 
             if (bytePosition == -1) {
                 return docIds;
@@ -139,21 +135,31 @@ public class DiskPositionalIndex implements Index {
             if (bytePosition == -1) {
                 return docIds;
             }
+
             // Using the already-opened postings.bin file, seek to the position of the term
             postings.seek(bytePosition);
-            
 
-            int documentFrequency = postings.readInt();
+            byte[] buffer = new byte[4];
+            postings.read(buffer, 0, buffer.length);
+
+            int documentFrequency = ByteBuffer.wrap(buffer).getInt();
 
             int docId = 0;
             int lastDocId = 0;
 
+            byte docIdsByteBuffer[] = new byte[4];
+
             for (int i = 0; i < documentFrequency; i++) {
 
-                // (docId + lastDocId) <-> doc id gaps
-                docId = postings.readInt() + lastDocId;
+                // Reads the document Id into docIdsByteBuffer
+                postings.read(docIdsByteBuffer, 0, docIdsByteBuffer.length);
 
-                int termFrequency = postings.readInt();
+                // (docId + lastDocId) <-> doc id gaps
+                docId = ByteBuffer.wrap(docIdsByteBuffer).getInt() + lastDocId;
+                buffer = new byte[4];
+
+                postings.read(buffer, 0, buffer.length);
+                int termFrequency = ByteBuffer.wrap(buffer).getInt();
 
                 postings.skipBytes(4 * termFrequency);
 

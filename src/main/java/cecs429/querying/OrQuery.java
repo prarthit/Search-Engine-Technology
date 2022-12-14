@@ -1,7 +1,10 @@
 package cecs429.querying;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import cecs429.indexing.Index;
@@ -22,15 +25,48 @@ public class OrQuery implements QueryComponent {
 	@Override
 	public List<Posting> getPostings(Index index) {
 		List<Posting> result = new ArrayList<>();
+		boolean impact_ordering = false;
 		if (mComponents.size() == 0) {
 			return result;
 		}
 
 		result = mComponents.get(0).getPostings(index);
 
+		if (!utils.Utils.isSortedList(result)) {
+			impact_ordering = true;
+		}
+
 		for (int i = 1; i < mComponents.size(); i++) {
 			List<Posting> postingList1 = mComponents.get(i).getPostings(index);
-			result = unionPostingDocumentIds(result, postingList1);
+			if (impact_ordering || !utils.Utils.isSortedList(postingList1)) {
+				result = unionPostingUnsortedLists(result, postingList1);
+			} else
+				result = unionPostingDocumentIds(result, postingList1);
+		}
+
+		return result;
+	}
+
+	private List<Posting> unionPostingUnsortedLists(List<Posting> literalPostings1, List<Posting> literalPostings2) {
+		List<Posting> result = new ArrayList<Posting>();
+
+		List<Integer> p1 = new ArrayList<>();
+		for (Posting p : literalPostings1) {
+			p1.add(p.getDocumentId());
+		}
+
+		List<Integer> p2 = new ArrayList<>();
+		for (Posting p : literalPostings2) {
+			p2.add(p.getDocumentId());
+		}
+
+		Set<Integer> lhs = new LinkedHashSet<>(p1);
+		lhs.addAll(p2);
+
+		Iterator<Integer> it = lhs.iterator();
+
+		while (it.hasNext()) {
+			result.add(new Posting(it.next()));
 		}
 
 		return result;

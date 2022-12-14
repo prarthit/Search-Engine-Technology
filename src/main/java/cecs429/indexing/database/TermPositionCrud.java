@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class TermPositionCrud implements TermPositionDao {
@@ -86,6 +87,31 @@ public class TermPositionCrud implements TermPositionDao {
             return null;
     }
 
+    public void getAllTermPositionData(HashMap<String, Long> hm) throws SQLException {
+        String query = "select * from `" + directoryName + "-TermBytePosition`";
+        PreparedStatement ps = con.prepareStatement(query);
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            String t = rs.getString("term");
+            Long b = rs.getLong("byte_position");
+            hm.put(t, hm.getOrDefault(t,b));
+        }
+    }
+
+    public long getBytePositionFromModel(String term) throws SQLException {
+        String query = "select byte_position from `" + directoryName + "-TermBytePosition` where term = ?";
+        PreparedStatement ps = con.prepareStatement(query);
+
+        ps.setString(1, term);
+        ResultSet rs = ps.executeQuery();
+
+        if(!rs.next()){
+            return -1;
+        }
+        return rs.getLong("byte_position");
+    }
+
     @Override
     public List<String> getVocabularyTerm() throws SQLException {
         String query = "select term from `" + directoryName + "-TermBytePosition` order by term";
@@ -132,5 +158,9 @@ public class TermPositionCrud implements TermPositionDao {
     public void sqlCommit() throws SQLException{
         con.commit();
         con.setAutoCommit(true);
+    }
+
+    public void closeConn() throws SQLException{
+        con.close();
     }
 }

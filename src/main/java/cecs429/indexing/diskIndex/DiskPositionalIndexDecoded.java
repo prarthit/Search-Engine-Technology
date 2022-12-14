@@ -6,6 +6,7 @@ import java.io.RandomAccessFile;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,10 +21,10 @@ import cecs429.indexing.database.TermPositionModel;
  * that contain them.
  */
 public class DiskPositionalIndexDecoded implements Index {
-    // Need to place in the interface 'index' later - verify
     private RandomAccessFile postings;
     private TermPositionCrud termPositionCrud;
-
+    private HashMap<String, Long> cache = new HashMap<>();
+    
     /**
      * Create a disk positional inverted index.
      * 
@@ -34,7 +35,6 @@ public class DiskPositionalIndexDecoded implements Index {
         try {
             postings = new RandomAccessFile(
                     new File(diskDirectoryPath + DiskIndexEnum.POSITIONAL_INDEX_ENCODED.getIndexFileName()), "r");
-
             termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX_ENCODED.getDbIndexFileName());
             termPositionCrud.openConnection();
         } catch (FileNotFoundException ex) {
@@ -61,7 +61,7 @@ public class DiskPositionalIndexDecoded implements Index {
 
             postings.seek(bytePosition);
 
-            int documentFrequency = vbCode.decodeNumber(postings);// ByteBuffer.wrap(buffer).getInt();
+            int documentFrequency = vbCode.decodeNumber(postings);
 
             int lastDocId = 0;
 
@@ -70,14 +70,14 @@ public class DiskPositionalIndexDecoded implements Index {
                 int docId = vbCode.decodeNumber(postings) + lastDocId;
 
                 // number of times term occurs in the doc
-                int termFrequency = vbCode.decodeNumber(postings); // ByteBuffer.wrap(buffer).getInt();
+                int termFrequency = vbCode.decodeNumber(postings);
                 int[] positions = new int[termFrequency];
 
                 int lastPositionGap = 0;
                 for (int positionIndex = 0; positionIndex < termFrequency; positionIndex++) {
                     // (current position + last position) <-> position gaps
-                    positions[positionIndex] = vbCode.decodeNumber(postings) + lastPositionGap;// ByteBuffer.wrap(positionsByteBuffer).getInt()
-                                                                                               // + lastPositionGap;
+                    positions[positionIndex] = vbCode.decodeNumber(postings) + lastPositionGap;
+
                     lastPositionGap = positions[positionIndex];
                 }
 
@@ -103,19 +103,25 @@ public class DiskPositionalIndexDecoded implements Index {
         try {
             List<Posting> docIds = new ArrayList<Posting>();
 
-            TermPositionModel termPositionModel = termPositionCrud.getTermPositionModel(term);
-            if (termPositionModel == null) {
+            long bytePosition = 0;
+            if(cache.get(term)!=null){
+                bytePosition = cache.get(term);
+            }
+            else{
+                bytePosition = termPositionCrud.getBytePositionFromModel(term);
+                cache.put(term, cache.getOrDefault(term, bytePosition));
+            }
+
+            if (bytePosition == -1) {
                 return docIds;
             }
 
-            long bytePosition = termPositionModel.getBytePosition();
             VariableByteCode vbCode = new VariableByteCode();
 
             // Using the already-opened postings.bin file, seek to the position of the term
             postings.seek(bytePosition);
 
-            int documentFrequency = vbCode.decodeNumber(postings);// ByteBuffer.wrap(buffer).getInt();
-
+            int documentFrequency = vbCode.decodeNumber(postings);
             int docId = 0;
             int lastDocId = 0;
 
@@ -124,7 +130,7 @@ public class DiskPositionalIndexDecoded implements Index {
                 // (docId + lastDocId) <-> doc id gaps
                 docId = vbCode.decodeNumber(postings) + lastDocId;
 
-                int termFrequency = vbCode.decodeNumber(postings);// ByteBuffer.wrap(buffer).getLong();
+                int termFrequency = vbCode.decodeNumber(postings);
 
                 // Scan through the positions of the term, as we only care about the docIds
                 for (int positionIndex = 0; positionIndex < termFrequency; positionIndex++) {

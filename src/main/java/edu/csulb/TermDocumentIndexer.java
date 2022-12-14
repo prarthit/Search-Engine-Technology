@@ -4,22 +4,23 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
 
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.DocumentCorpus;
-import cecs429.indexing.BiwordInvertedIndex;
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
-import cecs429.indexing.PositionalInvertedIndex;
+import cecs429.indexing.database.TermPositionCrud;
 import cecs429.indexing.diskIndex.DiskBiwordIndex;
 import cecs429.indexing.diskIndex.DiskIndexEnum;
 import cecs429.indexing.diskIndex.DiskIndexWriter;
-import cecs429.indexing.diskIndex.DiskIndexWriterEncoded;
 import cecs429.indexing.diskIndex.DiskPositionalIndex;
 import cecs429.indexing.diskIndex.DiskPositionalIndexDecoded;
+import cecs429.indexing.diskIndex.DiskPositionalIndexImpactOrdering;
+import cecs429.performance.PerformanceAnalyzer;
 import cecs429.querying.BooleanQueryParser;
 import cecs429.querying.BooleanQuerySearch;
 import cecs429.querying.QuerySearch;
@@ -46,8 +47,11 @@ public class TermDocumentIndexer {
 		DocumentCorpus corpus = null;
 		Index index = null;
 		Index biwordIndex = null;
+		Index impactIndex = null;
 		KGramIndex kGramIndex = null;
 
+		HashMap<String, Long> termBytePositionMap = new HashMap<>();
+		HashMap<String, Long> termBytePositionMapImpact = new HashMap<>();
 		// Create basic or advanced token processor based on properties file
 		TokenProcessor processor = EngineStore.getTokenProcessor();
 
@@ -67,46 +71,44 @@ public class TermDocumentIndexer {
 				Utils.setCorpusName(corpus.getCorpusName());
 
 				String diskDirPath = Utils.generateFilePathPrefix();
-				String positionalIndexFilePath = diskDirPath + DiskIndexEnum.POSITIONAL_INDEX.getIndexFileName();
-				File positionalIndexFile = new File(positionalIndexFilePath);
+				corpus.getDocuments();
 
-				if (positionalIndexFile.exists() && positionalIndexFile.length() > 0) {
-					// Call the corpus get documents to set the hashmap for corpus mDocuments
-					corpus.getDocuments();
+				DiskIndexWriter dWriter = new DiskIndexWriter();
 
-					// Read from the already existed disk index
-					if (prop.getProperty("variable_byte_encoding").equals("true")) {
-						index = new DiskPositionalIndexDecoded(diskDirPath);
-					} else {
-						index = new DiskPositionalIndex(diskDirPath);
-					}
-					biwordIndex = new DiskBiwordIndex(diskDirPath);
-				} else {
-					// Index the documents of the directory.
-					index = new PositionalInvertedIndex(corpus, processor);
-					biwordIndex = new BiwordInvertedIndex(corpus, processor);
+				dWriter.setMetrics(diskDirPath, processor, corpus);
 
-					DiskIndexWriter dWriter = new DiskIndexWriter();
-					// Build and write the disk index for encoded file
-					DiskIndexWriterEncoded dWriterCompressed = new DiskIndexWriterEncoded(index,
-							diskDirPath);
-					dWriterCompressed.writeIndex();
+				// Set the batch limit for the insert operation
+				dWriter.setMaximumBatchLimit(Integer.parseInt(prop.getProperty("maximum_batch_size")));
 
-					// Build and write disk index without encoding
-					dWriter.setPositionalIndex(index, diskDirPath);
-					dWriter.writeIndex();
-
-					dWriter.setBiwordIndex(biwordIndex, diskDirPath);
-					dWriter.writeBiwordIndex();
-				}
-
-				EngineStore.setIndex(index);
+				// Write positional Index in disk
+				dWriter.writeIndex();
+				// Write positional encoded Index in disk
+				dWriter.writeIndexEncoded();
+				// Write positional Impact ordering Index in disk
+				dWriter.writeImpactOrderingIndex();
+				// Write biword Index in disk
+				dWriter.writeBiwordIndex();
 
 				// Build a k-gram index from the corpus
 				kGramIndex = new KGramIndex(corpus);
 				EngineStore.setkGramIndex(kGramIndex);
 
+				fillHashMapForTermBytePosition(termBytePositionMap);
+				fillHashMapForTermBytePositionImpact(termBytePositionMapImpact);
+
+				// Read from the already existed disk index
+				if (prop.getProperty("variable_byte_encoding").equals("true")) {
+					index = new DiskPositionalIndexDecoded(diskDirPath);
+				} else {
+					index = new DiskPositionalIndex(diskDirPath, termBytePositionMap);
+				}
+
+				impactIndex = new DiskPositionalIndexImpactOrdering(diskDirPath, termBytePositionMapImpact);
+				EngineStore.setImpactIndex(impactIndex);
+
+				EngineStore.setIndex(index);
 				// Build a biword index from the corpus
+				biwordIndex = new DiskBiwordIndex(diskDirPath);
 				EngineStore.setBiwordIndex(biwordIndex);
 
 				String query_mode = prop.getProperty("query_mode");
@@ -117,10 +119,20 @@ public class TermDocumentIndexer {
 					booleanQueryParser.setTokenProcessor(EngineStore.getTokenProcessor());
 
 					querySearchEngine = new BooleanQuerySearch(booleanQueryParser);
+
+					if (Utils.isValidDirectory(newDirectoryPath + "/relevance")) {
+						performanceAnalyze(corpus, index, impactIndex);
+					}
 				} else {
 					int k = Integer.parseInt(prop.getProperty("num_results"));
 					String ranking_score_scheme = prop.getProperty("ranking_score_scheme");
 					querySearchEngine = new RankedQuerySearch(k, ranking_score_scheme, processor);
+
+					// Evaluate performance of the Ranked Query Search Engine and display the
+					// results if relevance directory is present in corpus directory
+					if (Utils.isValidDirectory(newDirectoryPath + "/relevance")) {
+						performanceAnalyze(corpus, index, impactIndex);
+					}
 				}
 			}
 
@@ -140,6 +152,37 @@ public class TermDocumentIndexer {
 		sc.close();
 
 		return;
+	}
+
+	private static void fillHashMapForTermBytePosition(HashMap<String, Long> termBytePositionMap) throws SQLException {
+		TermPositionCrud termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX.getDbIndexFileName());
+		termPositionCrud.openConnection();
+
+		termPositionCrud.getAllTermPositionData(termBytePositionMap);
+		termPositionCrud.closeConn();
+	}
+
+	private static void fillHashMapForTermBytePositionImpact(HashMap<String, Long> termBytePositionMapImpact)
+			throws SQLException {
+		TermPositionCrud termPositionCrud = new TermPositionCrud(
+				DiskIndexEnum.POSITIONAL_INDEX_IMPACT.getDbIndexFileName());
+		termPositionCrud.openConnection();
+
+		termPositionCrud.getAllTermPositionData(termBytePositionMapImpact);
+		termPositionCrud.closeConn();
+	}
+
+	private static void performanceAnalyze(DocumentCorpus corpus, Index index, Index impactIndex) {
+		PerformanceAnalyzer performanceAnalyzer = new PerformanceAnalyzer();
+		// System.out.println("\nAnalyzing...\n");
+		// performanceAnalyzer.analyzeRankingFormulas(index, corpus);
+		System.out.println("\nAnalyzing Vocab Elimination...\n");
+		performanceAnalyzer.analyzeVocabElimination(index, corpus);
+		// System.out.println("\nAnalyzing Boolean Queries - Impact Ordering...\n");
+		// performanceAnalyzer.analyzeImpactOrderingBooleanQueries(index, impactIndex,
+		// corpus);
+		// System.out.println("\nAnalyzing Ranked Queries - Impact Ordering...\n");
+		// performanceAnalyzer.analyzeImpactOrdering(index, impactIndex, corpus);
 	}
 
 	public static boolean processSpecialQueries(String query, TokenProcessor processor, Index index) {
