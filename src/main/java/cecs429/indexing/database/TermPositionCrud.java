@@ -86,6 +86,19 @@ public class TermPositionCrud implements TermPositionDao {
             return null;
     }
 
+    public long getBytePositionFromModel(String term) throws SQLException {
+        String query = "select byte_position from `" + directoryName + "-TermBytePosition` where term = ?";
+        PreparedStatement ps = con.prepareStatement(query);
+
+        ps.setString(1, term);
+        ResultSet rs = ps.executeQuery();
+
+        if(!rs.next()){
+            return -1;
+        }
+        return rs.getLong("byte_position");
+    }
+
     @Override
     public List<String> getVocabularyTerm() throws SQLException {
         String query = "select term from `" + directoryName + "-TermBytePosition` order by term";

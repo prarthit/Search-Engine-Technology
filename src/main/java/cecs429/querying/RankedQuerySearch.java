@@ -61,6 +61,8 @@ public class RankedQuerySearch extends QuerySearch {
     private VariantFormulaContext variantFormulaContext = new VariantFormulaContext();
     private TokenProcessor processor = new AdvancedTokenProcessor();
     private HashMap<String, Integer> accumulatorHashMap = new HashMap<>();
+    private Boolean accumulatorFlag = false;
+
     public RankedQuerySearch() {
         variantFormulaContext.setVariantStrategy(new DefaultWeightingStrategy());
     };
@@ -130,7 +132,7 @@ public class RankedQuerySearch extends QuerySearch {
                 int docId = entry.getKey();
                 double a_d = entry.getValue();
 
-                if(a_d > 0) {
+                if(accumulatorFlag && a_d > 0) {
                     accumulatorHashMap.put(query, accumulatorHashMap.getOrDefault(query, 0) + 1);
                 }
 
@@ -188,5 +190,9 @@ public class RankedQuerySearch extends QuerySearch {
 
     public HashMap<String, Integer> getAccumulatorHashMap() {
         return accumulatorHashMap;
+    }
+
+    public void setAccumulatorFlag(Boolean flag){
+        this.accumulatorFlag = flag;
     }
 }

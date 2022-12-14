@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +24,7 @@ import cecs429.indexing.database.TermPositionModel;
 public class DiskPositionalIndex implements Index {
     private RandomAccessFile postings;
     private TermPositionCrud termPositionCrud;
+    private HashMap<String, Long> cache = new HashMap<>();
 
     /**
      * Create a disk positional inverted index.
@@ -119,13 +121,18 @@ public class DiskPositionalIndex implements Index {
         try {
             List<Posting> docIds = new ArrayList<Posting>();
 
-            TermPositionModel termPositionModel = termPositionCrud.getTermPositionModel(term);
-            if (termPositionModel == null) {
-                return docIds;
+            long bytePosition = 0;
+            if(cache.get(term)!=null){
+                bytePosition = cache.get(term);
+            }
+            else{
+                bytePosition = termPositionCrud.getBytePositionFromModel(term);
+                cache.put(term, cache.getOrDefault(term, bytePosition));
             }
 
-            long bytePosition = termPositionModel.getBytePosition();
-
+            if (bytePosition == -1) {
+                return docIds;
+            }
             // Using the already-opened postings.bin file, seek to the position of the term
             postings.seek(bytePosition);
 

@@ -23,8 +23,10 @@ public class PerformanceEvaluator {
     }
 
     public double getAvgPrecision(String query, Set<Integer> relevantDocNums) {
+        ((RankedQuerySearch)querySearchEngine).setAccumulatorFlag(true);
         List<Result> results = querySearchEngine.findQuery(query, index, corpus);
-
+        ((RankedQuerySearch)querySearchEngine).setAccumulatorFlag(false);
+        
         return getAvgPrecision(results, relevantDocNums);
     }
 

@@ -103,7 +103,6 @@ public class PerformanceAnalyzer {
         RankedQuerySearch rankedQuerySearchEngine = new RankedQuerySearch();
         rankedQuerySearchEngine.setK(50);
         List<Float> wqtList = Arrays.asList(1.0f,1.1f,1.2f,1.3f,1.4f,1.5f,1.7f,1.9f,2.1f,2.3f,2.5f); 
-        // List<Float> wqtList = Arrays.asList(1.3f); 
         List<StatisticScores> statisticScores = new ArrayList<>();
         
         for(float wqt : wqtList){
@@ -116,13 +115,11 @@ public class PerformanceAnalyzer {
             double meanResponseTime = performanceEvaluator.getMeanResponseTime(firstQuery);
             double throughput = performanceEvaluator.getThroughput(firstQuery);
 
-            System.out.println("\n*** Ranked Queries - Vocab Elimination ***\n");
-
             statisticScores
                     .add(new StatisticScores("Vocab Elimination", meanAvgPrecision, meanResponseTime, throughput));
         }
         // plot PR curve for first query
-        
+        System.out.println("\n*** Ranked Queries - Vocab Elimination ***\n");
         displayTableStatistics(statisticScores);
     }
 

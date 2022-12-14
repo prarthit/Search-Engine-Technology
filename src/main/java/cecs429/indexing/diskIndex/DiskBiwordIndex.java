@@ -6,13 +6,12 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import cecs429.indexing.Index;
 import cecs429.indexing.Posting;
 import cecs429.indexing.database.TermPositionCrud;
-import cecs429.indexing.database.TermPositionModel;
-import utils.Utils;
 
 /**
  * A DiskBiwordIndex can retrieve postings for a biword term from a data
@@ -23,7 +22,8 @@ import utils.Utils;
 public class DiskBiwordIndex implements Index {
     private RandomAccessFile postings;
     private TermPositionCrud termPositionCrud;
-
+    private HashMap<String, Long> cache = new HashMap<>();
+    
     /**
      * Create a disk positional inverted index.
      * 
@@ -51,11 +51,18 @@ public class DiskBiwordIndex implements Index {
         try {
             List<Posting> docIds = new ArrayList<Posting>();
 
-            TermPositionModel termPositionModel = termPositionCrud.getTermPositionModel(term);
-            if (termPositionModel == null) {
+            long bytePosition = 0;
+            if(cache.get(term)!=null){
+                bytePosition = cache.get(term);
+            }
+            else{
+                bytePosition = termPositionCrud.getBytePositionFromModel(term);
+                cache.put(term, cache.getOrDefault(term, bytePosition));
+            }
+
+            if (bytePosition == -1) {
                 return docIds;
             }
-            long bytePosition = termPositionModel.getBytePosition();
 
             // Using the already-opened postings.bin file, seek to the position of the term
             postings.seek(bytePosition);
