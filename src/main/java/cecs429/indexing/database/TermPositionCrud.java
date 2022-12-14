@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class TermPositionCrud implements TermPositionDao {
@@ -84,6 +85,18 @@ public class TermPositionCrud implements TermPositionDao {
             return tpm;
         } else
             return null;
+    }
+
+    public void getAllTermPositionData(HashMap<String, Long> hm) throws SQLException {
+        String query = "select * from `" + directoryName + "-TermBytePosition`";
+        PreparedStatement ps = con.prepareStatement(query);
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            String t = rs.getString("term");
+            Long b = rs.getLong("byte_position");
+            hm.put(t, hm.getOrDefault(t,b));
+        }
     }
 
     public long getBytePositionFromModel(String term) throws SQLException {

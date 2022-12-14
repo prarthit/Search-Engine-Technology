@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
@@ -12,7 +13,9 @@ import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
 import cecs429.indexing.KGramIndex;
+import cecs429.indexing.database.TermPositionCrud;
 import cecs429.indexing.diskIndex.DiskBiwordIndex;
+import cecs429.indexing.diskIndex.DiskIndexEnum;
 import cecs429.indexing.diskIndex.DiskIndexWriter;
 import cecs429.indexing.diskIndex.DiskPositionalIndex;
 import cecs429.indexing.diskIndex.DiskPositionalIndexDecoded;
@@ -47,6 +50,8 @@ public class TermDocumentIndexer {
 		Index impactIndex = null;
 		KGramIndex kGramIndex = null;
 
+		HashMap<String, Long> termBytePositionMap = new HashMap<>();
+		HashMap<String, Long> termBytePositionMapImpact = new HashMap<>();
 		// Create basic or advanced token processor based on properties file
 		TokenProcessor processor = EngineStore.getTokenProcessor();
 
@@ -88,14 +93,17 @@ public class TermDocumentIndexer {
 				kGramIndex = new KGramIndex(corpus);
 				EngineStore.setkGramIndex(kGramIndex);
 
+				fillHashMapForTermBytePosition(termBytePositionMap);
+				fillHashMapForTermBytePositionImpact(termBytePositionMapImpact);
+
 				// Read from the already existed disk index
 				if (prop.getProperty("variable_byte_encoding").equals("true")) {
 					index = new DiskPositionalIndexDecoded(diskDirPath);
 				} else {
-					index = new DiskPositionalIndex(diskDirPath);
+					index = new DiskPositionalIndex(diskDirPath, termBytePositionMap);
 				}
 
-				impactIndex = new DiskPositionalIndexImpactOrdering(diskDirPath);
+				impactIndex = new DiskPositionalIndexImpactOrdering(diskDirPath, termBytePositionMapImpact);
 				EngineStore.setImpactIndex(impactIndex);
 
 				EngineStore.setIndex(index);
@@ -144,6 +152,20 @@ public class TermDocumentIndexer {
 		sc.close();
 
 		return;
+	}
+
+	private static void fillHashMapForTermBytePosition(HashMap<String, Long> termBytePositionMap) throws SQLException {
+		TermPositionCrud termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX.getDbIndexFileName());
+		termPositionCrud.openConnection();
+
+		termPositionCrud.getAllTermPositionData(termBytePositionMap);
+	}
+
+	private static void fillHashMapForTermBytePositionImpact(HashMap<String, Long> termBytePositionMapImpact) throws SQLException {
+		TermPositionCrud termPositionCrud = new TermPositionCrud(DiskIndexEnum.POSITIONAL_INDEX_IMPACT.getDbIndexFileName());
+		termPositionCrud.openConnection();
+
+		termPositionCrud.getAllTermPositionData(termBytePositionMapImpact);
 	}
 
 	private static void performanceAnalyze(DocumentCorpus corpus, Index index, Index impactIndex) {
