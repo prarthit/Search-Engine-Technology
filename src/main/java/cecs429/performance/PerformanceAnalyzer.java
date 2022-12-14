@@ -11,7 +11,6 @@ import java.util.Set;
 import cecs429.documents.DocumentCorpus;
 import cecs429.indexing.Index;
 import cecs429.querying.RankedQuerySearch;
-import de.vandermeer.asciitable.AsciiTable;
 import utils.Utils;
 
 public class PerformanceAnalyzer {
@@ -79,26 +78,16 @@ public class PerformanceAnalyzer {
             double meanAvgPrecision = performanceEvaluator.getMeanAvgPrecision(queries, relevantDocNums);
 
             String firstQuery = queries.get(0);
+            double avgPrecision = performanceEvaluator.getAvgPrecision(firstQuery, relevantDocNums.get(0));
             double meanResponseTime = performanceEvaluator.getMeanResponseTime(firstQuery);
             double throughput = performanceEvaluator.getThroughput(meanResponseTime);
 
             statisticScoresForRankingSchemes
-                    .add(new StatisticScores(rankingScoreSchemeName, meanAvgPrecision, meanResponseTime, throughput));
-
-            // plot PR curve for first query
+                    .add(new StatisticScores(rankingScoreSchemeName, meanAvgPrecision, avgPrecision, meanResponseTime,
+                            throughput));
         }
 
-        AsciiTable at = new AsciiTable();
-        at.addRule();
-        at.addRow(StatisticScores.getHeader());
-        for (StatisticScores statisticScores : statisticScoresForRankingSchemes) {
-            at.addRule();
-            at.addRow(statisticScores.getContent());
-        }
-        at.addRule();
-
-        String rend = at.render();
-        System.out.println(rend);
+        StatisticScores.printScoresList(statisticScoresForRankingSchemes);
     }
 
     public void analyzeQuery(String query, String rankingMethod) {

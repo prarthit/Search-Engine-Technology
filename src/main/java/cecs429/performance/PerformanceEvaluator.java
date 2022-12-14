@@ -68,7 +68,7 @@ public class PerformanceEvaluator {
 
     public double getMeanResponseTime(String query) {
         double totalTime = 0;
-        int iterations = 1;
+        int iterations = 30;
 
         // Run findQuery for num of iterations and take the average of the response time
         for (int i = 1; i <= iterations; i++) {
